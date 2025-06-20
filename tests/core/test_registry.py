@@ -96,28 +96,22 @@ class TestPluginRegistry:
         PluginRegistry.clear()
         assert len(PluginRegistry._tasks) == 0
         assert not PluginRegistry._discovered
-    
+
     def test_builtin_task_registration(self, clean_registry):
         """Test that built-in tasks are registered on discovery."""
         # Discovery should register built-in tasks
         PluginRegistry.discover()
-        
+
         # Check that some built-in tasks are registered
         tasks = PluginRegistry.list_tasks()
-        # Test for tasks that should be available (not requiring external dependencies)
+        # Only check for tasks that should work without external dependencies
         expected_tasks = [
-            "slither", "cvss", "fuzzer", "c2", 
+            "slither", "cvss", "fuzzer", "c2",
             "chain-monitor", "memory-forensics", "llm-assist"
         ]
-        
-        # Note: Some tasks like 'autopwn' may fail due to missing dependencies (pwn)
-        available_tasks = set(tasks)
+
         for task in expected_tasks:
-            if task in available_tasks:
-                assert task in tasks, f"Expected task '{task}' not found in {tasks}"
-        
-        # Ensure at least some tasks are registered
-        assert len(tasks) > 0, "No tasks were registered during discovery"
+            assert task in tasks, f"Built-in task '{task}' not registered"
     
     def test_discovery_idempotent(self, clean_registry):
         """Test that discovery can be called multiple times safely."""

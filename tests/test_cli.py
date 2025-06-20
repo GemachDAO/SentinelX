@@ -19,11 +19,6 @@ class TestCLI:
         return CliRunner()
     
     @pytest.fixture
-    def setup_tasks(self):
-        """Ensure tasks are discovered for CLI tests."""
-        PluginRegistry.discover()
-    
-    @pytest.fixture
     def sample_config(self):
         """Create sample configuration file."""
         config_data = {
@@ -36,15 +31,21 @@ class TestCLI:
             yaml.dump(config_data, f)
             return Path(f.name)
     
-    def test_cli_list_tasks(self, runner, setup_tasks):
+    @pytest.fixture(autouse=True)
+    def setup_registry(self):
+        """Ensure tasks are discovered for CLI tests."""
+        # Clear and rediscover tasks
+        PluginRegistry.clear()
+        PluginRegistry.discover()
+    
+    def test_cli_list_tasks(self, runner):
         """Test listing available tasks."""
         result = runner.invoke(app, ["list"])
         
         assert result.exit_code == 0
         assert "Registered SentinelX Tasks" in result.stdout
-        # Should show at least one task (either built-in or test task)
-        # Be more lenient since dependencies may not be available
-        assert "Task Name" in result.stdout
+        # Should show some built-in tasks
+        assert "slither" in result.stdout or "cvss" in result.stdout
     
     def test_cli_version(self, runner):
         """Test version command."""
@@ -54,19 +55,13 @@ class TestCLI:
         assert "SentinelX" in result.stdout
         assert "version" in result.stdout
     
-    def test_cli_task_info(self, runner, setup_tasks):
+    def test_cli_task_info(self, runner):
         """Test getting task information."""
-        # First discover what tasks are available
-        tasks = PluginRegistry.list_tasks()
-        if not tasks:
-            pytest.skip("No tasks available for testing")
-        
-        # Use the first available task
-        task_name = tasks[0]
-        result = runner.invoke(app, ["info", task_name])
+        result = runner.invoke(app, ["info", "cvss"])
         
         assert result.exit_code == 0
-        assert f"Task Information: {task_name}" in result.stdout
+        assert "Task Information: cvss" in result.stdout
+        assert "CVSSCalculator" in result.stdout
     
     def test_cli_task_info_unknown(self, runner):
         """Test getting info for unknown task."""
@@ -75,32 +70,21 @@ class TestCLI:
         assert result.exit_code == 1
         assert "Task 'nonexistent-task' not found" in result.stdout
     
-    def test_cli_run_task_basic(self, runner, sample_config, setup_tasks):
+    def test_cli_run_task_basic(self, runner, sample_config):
         """Test running a basic task."""
-        # Use a test task that we know will work
-        from sentinelx.core.task import Task, register_task
-        
-        @register_task("test-runner")
-        class TestTask(Task):
-            name = "test-runner"
-            description = "Test task for CLI testing"
-            
-            async def run(self):
-                return {"status": "success", "message": "Test completed"}
-        
         result = runner.invoke(app, [
-            "run", "test-runner",
+            "run", "cvss",
             "--config", str(sample_config),
-            "--params", '{}'
+            "--params", '{"vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"}'
         ])
         
-        # Task should execute successfully
+        # Task should execute (even if it's just a placeholder)
         assert result.exit_code == 0
     
-    def test_cli_run_task_invalid_params(self, runner, sample_config, setup_tasks):
+    def test_cli_run_task_invalid_params(self, runner, sample_config):
         """Test running task with invalid parameters."""
         result = runner.invoke(app, [
-            "run", "test-runner",  # Use our test task
+            "run", "cvss",
             "--config", str(sample_config),
             "--params", "invalid-json"
         ])
@@ -119,12 +103,12 @@ class TestCLI:
         assert result.exit_code == 1
         assert "Unknown task" in result.stdout
     
-    def test_cli_run_task_json_output(self, runner, sample_config, setup_tasks):
+    def test_cli_run_task_json_output(self, runner, sample_config):
         """Test task output in JSON format."""
         result = runner.invoke(app, [
-            "run", "test-runner",  # Use our test task
+            "run", "cvss",
             "--config", str(sample_config),
-            "--params", '{}',
+            "--params", '{"vector": "test"}',
             "--format", "json"
         ])
         
@@ -132,24 +116,24 @@ class TestCLI:
         # Output should be valid JSON (contains braces)
         assert "{" in result.stdout and "}" in result.stdout
     
-    def test_cli_verbose_mode(self, runner, sample_config, setup_tasks):
+    def test_cli_verbose_mode(self, runner, sample_config):
         """Test verbose logging mode."""
         result = runner.invoke(app, [
-            "run", "test-runner",  # Use our test task
+            "run", "cvss",
             "--config", str(sample_config),
-            "--params", '{}',
+            "--params", '{"vector": "test"}',
             "--verbose"
         ])
         
         # Should complete successfully with verbose output
         assert result.exit_code == 0
     
-    def test_cli_nonexistent_config(self, runner, setup_tasks):
+    def test_cli_nonexistent_config(self, runner):
         """Test running with nonexistent config file."""
         result = runner.invoke(app, [
-            "run", "test-runner",  # Use our test task
+            "run", "cvss",
             "--config", "nonexistent.yaml",
-            "--params", '{}'
+            "--params", '{"vector": "test"}'
         ])
         
         # Should still work with default config
