@@ -1,0 +1,12 @@
+typer
+rich
+pydantic
+slither-analyzer
+mythril
+angr
+pwntools
+scapy
+fastapi
+uvicorn[standard]
+graphviz
+PyYAML
