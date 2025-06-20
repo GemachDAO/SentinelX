@@ -1,0 +1,180 @@
+Metadata-Version: 2.4
+Name: sentinelx
+Version: 0.1.0
+Summary: A modular Python framework for offensive and defensive security operations across Web2 and Web3
+Author: SentinelX Team
+License: MIT
+Project-URL: Homepage, https://github.com/sentinelx/sentinelx
+Project-URL: Documentation, https://sentinelx.readthedocs.io
+Project-URL: Repository, https://github.com/sentinelx/sentinelx
+Project-URL: Issues, https://github.com/sentinelx/sentinelx/issues
+Keywords: security,blockchain,web3,penetration-testing,audit
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Information Technology
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: typer>=0.9.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: uvicorn[standard]>=0.23.0
+Requires-Dist: graphviz>=0.20.0
+Requires-Dist: PyYAML>=6.0.0
+Requires-Dist: aiohttp>=3.8.0
+Requires-Dist: pytest>=7.0.0
+Requires-Dist: pytest-asyncio>=0.21.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.5.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
+Provides-Extra: security
+Requires-Dist: slither-analyzer>=0.10.0; extra == "security"
+Requires-Dist: mythril>=0.24.0; extra == "security"
+Requires-Dist: angr>=9.2.0; extra == "security"
+Requires-Dist: pwntools>=4.11.0; extra == "security"
+Requires-Dist: scapy>=2.5.0; extra == "security"
+Requires-Dist: web3>=6.0.0; extra == "security"
+Provides-Extra: ai
+Requires-Dist: openai>=1.0.0; extra == "ai"
+Requires-Dist: transformers>=4.30.0; extra == "ai"
+Requires-Dist: torch>=2.0.0; extra == "ai"
+Provides-Extra: blockchain
+Requires-Dist: solana>=0.30.0; extra == "blockchain"
+Requires-Dist: brownie-eth>=1.20.0; extra == "blockchain"
+
+# SentinelX
+
+SentinelX is a modular Python framework for offensive and defensive security operations across Web2 and Web3.  It exposes a plugin-based task system so additional tooling can be integrated without modifying the core framework.
+
+## Features
+
+- **Unified runtime** – the `Task` abstraction enables asynchronous operations and provides hooks for setup and teardown.  Tasks are discovered through a `PluginRegistry` and instantiated with a `Context` loaded from YAML configuration.
+- **Threat modeling** utilities for building simple STRIDE style models and rendering diagrams.
+- **Auditing** modules for smart contracts and Web2 applications.
+- **Exploit development** helpers including fuzzing and automatic exploit generation.
+- **Red team** components such as a minimal C2 server and lateral movement helpers.
+- **Blockchain monitoring** tasks for transaction replay or real world asset scanning.
+- **Forensics** utilities for memory, disk and on‑chain incident response.
+- **AI assistance** for prompt crafting or LLM based helpers.
+- Command line interface built with [Typer](https://typer.tiangolo.com) to run any registered task.
+
+## Directory structure
+
+```
+sentinelx/
+├── core/            # runtime, plugin system and utilities
+│   ├── context.py
+│   ├── registry.py
+│   ├── task.py
+│   └── utils.py
+├── threatmodel/     # threat modeling helpers
+│   ├── model.py
+│   └── diagrams.py
+├── audit/           # static analysis modules
+│   ├── smart_contract.py
+│   ├── web2_static.py
+│   └── cvss.py
+├── exploit/         # fuzzing and exploit generation
+│   ├── fuzzing.py
+│   ├── exploit_gen.py
+│   └── shellcode.py
+├── redteam/         # C2 server and other red team tools
+│   ├── c2.py
+│   ├── lateral_move.py
+│   └── social_eng.py
+├── blockchain/      # chain watchers and transaction tools
+│   ├── monitor.py
+│   ├── replay.py
+│   └── rwascan.py
+├── forensic/        # memory and disk forensics
+│   ├── memory.py
+│   ├── disk.py
+│   └── chain_ir.py
+├── ai/              # LLM helpers and adversarial tools
+│   ├── llm_assist.py
+│   └── adversarial.py
+└── cli.py           # entry point for running tasks
+```
+
+## Installation
+
+Install dependencies and run the framework directly from the repository:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+## Configuration
+
+Create a `config.yaml` (see `config.yaml.example`) to define network settings and secrets.  Values prefixed with `ENV:` are resolved from environment variables when `Context.load()` is called.
+
+```yaml
+network:
+  http_proxy: http://127.0.0.1:8080
+  retries: 3
+
+blockchain:
+  rpc_urls:
+    - https://arb1.gemachdao.io
+    - https://solana-mainnet.gemachdao.io
+
+secrets:
+  etherscan_api: ENV:ETHERSCAN_APIKEY
+  openai: ENV:OPENAI_KEY
+```
+
+## CLI usage
+
+The CLI loads the configuration, discovers plugins and runs the specified task.
+
+```bash
+python -m sentinelx.cli run <task-name> --params '<yaml_or_json>'
+```
+
+Example:
+
+```bash
+python -m sentinelx.cli run slither --params '{sol_file: MyToken.sol}'
+```
+
+The CLI prints the YAML result returned by the task.
+
+## Writing plugins
+
+Subclass `Task` to create new actions and register them with `PluginRegistry.register`.  Alternatively, expose an entry point named `sentinelx.tasks` in your project so the framework can discover your plugin automatically.
+
+## Project status
+
+The tasks included in this repository are lightweight placeholders demonstrating how to structure modules.  SentinelX aims to provide a single framework to orchestrate specialized security tooling from a unified command line interface.
+
+## Requirements
+
+Dependencies are listed in `requirements.txt`:
+
+- typer
+- rich
+- pydantic
+- slither-analyzer
+- mythril
+- angr
+- pwntools
+- scapy
+- fastapi
+- uvicorn[standard]
+- graphviz
+- PyYAML
+

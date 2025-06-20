@@ -1,0 +1,174 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sentinelx"
+version = "0.1.0"
+description = "A modular Python framework for offensive and defensive security operations across Web2 and Web3"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "SentinelX Team"},
+]
+keywords = ["security", "blockchain", "web3", "penetration-testing", "audit"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pydantic>=2.0.0",
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "graphviz>=0.20.0",
+    "PyYAML>=6.0.0",
+    "aiohttp>=3.8.0",
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.0.0",
+]
+security = [
+    "slither-analyzer>=0.10.0",
+    "mythril>=0.24.0",
+    "angr>=9.2.0",
+    "pwntools>=4.11.0",
+    "scapy>=2.5.0",
+    "web3>=6.0.0",
+]
+ai = [
+    "openai>=1.0.0",
+    "transformers>=4.30.0",
+    "torch>=2.0.0",
+]
+blockchain = [
+    "solana>=0.30.0",
+    "brownie-eth>=1.20.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/sentinelx/sentinelx"
+Documentation = "https://sentinelx.readthedocs.io"
+Repository = "https://github.com/sentinelx/sentinelx"
+Issues = "https://github.com/sentinelx/sentinelx/issues"
+
+[project.scripts]
+sentinelx = "sentinelx.cli:main"
+
+[project.entry-points."sentinelx.tasks"]
+# Core audit tasks
+slither = "sentinelx.audit.smart_contract:SlitherScan"
+mythril = "sentinelx.audit.smart_contract:MythrilScan"
+cvss = "sentinelx.audit.cvss:CVSSCalculator"
+web2-static = "sentinelx.audit.web2_static:Web2Static"
+
+# Exploit development tasks
+autopwn = "sentinelx.exploit.exploit_gen:AutoPwn"
+fuzzer = "sentinelx.exploit.fuzzing:Fuzzer"
+shellcode = "sentinelx.exploit.shellcode:ShellcodeGen"
+
+# Red team tasks
+c2 = "sentinelx.redteam.c2:C2Server"
+lateral-move = "sentinelx.redteam.lateral_move:LateralMove"
+social-eng = "sentinelx.redteam.social_eng:SocialEngineering"
+
+# Blockchain tasks
+chain-monitor = "sentinelx.blockchain.monitor:ChainMonitor"
+tx-replay = "sentinelx.blockchain.replay:TxReplay"
+rwa-scan = "sentinelx.blockchain.rwascan:RwaScan"
+
+# Forensics tasks
+memory-forensics = "sentinelx.forensic.memory:MemoryForensics"
+disk-forensics = "sentinelx.forensic.disk:DiskForensics"
+chain-ir = "sentinelx.forensic.chain_ir:ChainIR"
+
+# AI tasks
+llm-assist = "sentinelx.ai.llm_assist:LLMAssist"
+prompt-injection = "sentinelx.ai.adversarial:PromptInjection"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sentinelx*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--tb=short",
+    "--cov=sentinelx",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+asyncio_mode = "auto"
+
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "slither.*",
+    "mythril.*",
+    "angr.*",
+    "pwn.*",
+    "scapy.*",
+    "graphviz.*",
+]
+ignore_missing_imports = true

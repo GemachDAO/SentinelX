@@ -1,0 +1,22 @@
+[console_scripts]
+sentinelx = sentinelx.cli:main
+
+[sentinelx.tasks]
+autopwn = sentinelx.exploit.exploit_gen:AutoPwn
+c2 = sentinelx.redteam.c2:C2Server
+chain-ir = sentinelx.forensic.chain_ir:ChainIR
+chain-monitor = sentinelx.blockchain.monitor:ChainMonitor
+cvss = sentinelx.audit.cvss:CVSSCalculator
+disk-forensics = sentinelx.forensic.disk:DiskForensics
+fuzzer = sentinelx.exploit.fuzzing:Fuzzer
+lateral-move = sentinelx.redteam.lateral_move:LateralMove
+llm-assist = sentinelx.ai.llm_assist:LLMAssist
+memory-forensics = sentinelx.forensic.memory:MemoryForensics
+mythril = sentinelx.audit.smart_contract:MythrilScan
+prompt-injection = sentinelx.ai.adversarial:PromptInjection
+rwa-scan = sentinelx.blockchain.rwascan:RwaScan
+shellcode = sentinelx.exploit.shellcode:ShellcodeGen
+slither = sentinelx.audit.smart_contract:SlitherScan
+social-eng = sentinelx.redteam.social_eng:SocialEngineering
+tx-replay = sentinelx.blockchain.replay:TxReplay
+web2-static = sentinelx.audit.web2_static:Web2Static
