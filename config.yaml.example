@@ -1,0 +1,12 @@
+network:
+  http_proxy: http://127.0.0.1:8080
+  retries: 3
+
+blockchain:
+  rpc_urls:
+    - https://arb1.gemachdao.io
+    - https://solana-mainnet.gemachdao.io
+
+secrets:
+  etherscan_api: ENV:ETHERSCAN_APIKEY
+  openai: ENV:OPENAI_KEY
