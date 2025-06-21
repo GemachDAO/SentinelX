@@ -1,5 +1,6 @@
 README.md
 pyproject.toml
+setup.py
 sentinelx/__init__.py
 sentinelx/cli.py
 sentinelx.egg-info/PKG-INFO
