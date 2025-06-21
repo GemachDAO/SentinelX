@@ -34,6 +34,14 @@ try:
 except ImportError:
     HAS_REPORTING = False
 
+# Web API imports (Phase 5)
+try:
+    from .web import create_app
+    import uvicorn
+    HAS_WEB = True
+except ImportError:
+    HAS_WEB = False
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -55,6 +63,11 @@ if HAS_PERFORMANCE:
 if HAS_REPORTING:
     report_app = typer.Typer(help="Advanced reporting commands")
     app.add_typer(report_app, name="report")
+
+# Phase 5: Add web command group
+if HAS_WEB:
+    web_app = typer.Typer(help="Web API server and dashboard commands")
+    app.add_typer(web_app, name="web")
 
 # Auto-discover plugins when module is imported
 PluginRegistry.discover()
@@ -719,6 +732,113 @@ if HAS_REPORTING:
         else:
             rprint(f"[red]Unknown action: {action}[/red]")
             raise typer.Exit(1)
+
+# =============================================================================
+# Phase 5: Web API Commands
+# =============================================================================
+
+if HAS_WEB:
+    @web_app.command("start")
+    def start_web_server(
+        host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host to bind to"),
+        port: int = typer.Option(8000, "--port", "-p", help="Port to bind to"),
+        reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload for development"),
+        workers: int = typer.Option(1, "--workers", "-w", help="Number of worker processes")
+    ):
+        """Start the SentinelX web API server."""
+        rprint(f"[bold blue]🚀 Starting SentinelX Web API Server[/bold blue]")
+        rprint(f"[green]📡 Server: http://{host}:{port}[/green]")
+        rprint(f"[green]📚 API Docs: http://{host}:{port}/api/docs[/green]")
+        rprint(f"[green]🔧 ReDoc: http://{host}:{port}/api/redoc[/green]")
+        
+        try:
+            app_instance = create_app()
+            uvicorn.run(
+                app_instance,
+                host=host,
+                port=port,
+                reload=reload,
+                workers=workers if not reload else 1
+            )
+        except Exception as e:
+            rprint(f"[red]❌ Failed to start web server: {e}[/red]")
+            raise typer.Exit(1)
+
+    @web_app.command("info")
+    def web_info():
+        """Show information about the web API."""
+        rprint("[bold blue]🌐 SentinelX Web API Information[/bold blue]")
+        rprint("")
+        rprint("[bold green]Available Endpoints:[/bold green]")
+        rprint("  🔹 GET  /api/v1/tasks              - List all tasks")
+        rprint("  🔹 GET  /api/v1/tasks/{name}/info  - Get task details")
+        rprint("  🔹 POST /api/v1/tasks/{name}/run   - Execute task")
+        rprint("  🔹 GET  /api/v1/workflows          - List workflows")
+        rprint("  🔹 POST /api/v1/workflows/run      - Execute workflow")
+        rprint("  🔹 GET  /api/v1/reports            - List reports")
+        rprint("  🔹 WebSocket /ws/execution         - Real-time updates")
+        rprint("")
+        rprint("[bold green]Features:[/bold green]")
+        rprint("  ✅ RESTful API with OpenAPI documentation")
+        rprint("  ✅ Real-time execution monitoring via WebSockets")
+        rprint("  ✅ Async task execution")
+        rprint("  ✅ CORS enabled for web frontend")
+        rprint("  ✅ Built-in authentication (token-based)")
+        rprint("")
+        rprint("[bold yellow]Getting Started:[/bold yellow]")
+        rprint("  1. Start server: sentinelx web start")
+        rprint("  2. Visit http://localhost:8000/api/docs")
+        rprint("  3. Try the API endpoints")
+
+    @web_app.command("test")
+    def test_web_api(
+        host: str = typer.Option("127.0.0.1", "--host", help="API host"),
+        port: int = typer.Option(8000, "--port", help="API port"),
+        task: Optional[str] = typer.Option(None, "--task", help="Task to test")
+    ):
+        """Test the web API endpoints."""
+        import requests
+        import time
+        
+        base_url = f"http://{host}:{port}/api/v1"
+        
+        try:
+            # Test health endpoint
+            rprint("[blue]🔍 Testing health endpoint...[/blue]")
+            response = requests.get(f"{base_url}/health", timeout=5)
+            if response.status_code == 200:
+                rprint("[green]✅ Health check passed[/green]")
+            else:
+                rprint(f"[red]❌ Health check failed: {response.status_code}[/red]")
+                return
+            
+            # Test tasks endpoint
+            rprint("[blue]🔍 Testing tasks endpoint...[/blue]")
+            response = requests.get(f"{base_url}/tasks", timeout=10)
+            if response.status_code == 200:
+                tasks = response.json()
+                rprint(f"[green]✅ Tasks endpoint works - {tasks['total']} tasks available[/green]")
+                
+                if task and task in [t['name'] for t in tasks['tasks']]:
+                    # Test specific task execution
+                    rprint(f"[blue]🔍 Testing task execution: {task}...[/blue]")
+                    exec_response = requests.post(
+                        f"{base_url}/tasks/{task}/run",
+                        json={"parameters": {}},
+                        timeout=30
+                    )
+                    if exec_response.status_code == 200:
+                        rprint(f"[green]✅ Task execution started successfully[/green]")
+                    else:
+                        rprint(f"[yellow]⚠️ Task execution response: {exec_response.status_code}[/yellow]")
+            else:
+                rprint(f"[red]❌ Tasks endpoint failed: {response.status_code}[/red]")
+            
+        except requests.exceptions.ConnectionError:
+            rprint(f"[red]❌ Could not connect to API server at {base_url}[/red]")
+            rprint("[yellow]💡 Make sure the server is running: sentinelx web start[/yellow]")
+        except Exception as e:
+            rprint(f"[red]❌ API test failed: {e}[/red]")
 
 if __name__ == "__main__":
     app()
