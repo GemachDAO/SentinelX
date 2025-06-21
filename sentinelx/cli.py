@@ -12,6 +12,7 @@ from rich import print as rprint
 from .core.registry import PluginRegistry
 from .core.context import Context
 from .core.task import TaskError
+from .core.workflow import WorkflowEngine
 
 # Configure logging
 logging.basicConfig(
@@ -147,6 +148,249 @@ def info(task_name: str = typer.Argument(..., help="Name of the task to get info
         table.add_row("Required Parameters", ", ".join(required_params))
     
     console.print(table)
+
+# Workflow commands
+workflow_app = typer.Typer(help="Workflow orchestration commands")
+app.add_typer(workflow_app, name="workflow")
+
+@workflow_app.command("run")
+def workflow_run(
+    workflow_file: str = typer.Argument(..., help="Workflow YAML/JSON file path"),
+    config: str = typer.Option("config.yaml", "--config", "-c", help="Configuration file path"),
+    output: Optional[str] = typer.Option(None, "--output", "-o", help="Output file for results"),
+    output_format: str = typer.Option("json", "--format", "-f", help="Output format (json, yaml)"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose logging")
+):
+    """Run a workflow from a YAML/JSON file."""
+    
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+    
+    async def _run_workflow():
+        try:
+            # Initialize context and registry
+            context = Context.load(None)  # Use default config for now
+            registry = PluginRegistry()
+            
+            # Initialize workflow engine
+            engine = WorkflowEngine(registry)
+            
+            # Load and execute workflow
+            from pathlib import Path
+            workflow_path = Path(workflow_file)
+            if not workflow_path.exists():
+                rprint(f"[red]Workflow file not found: {workflow_file}[/red]")
+                raise typer.Exit(1)
+            
+            rprint(f"[blue]Loading workflow from:[/blue] {workflow_file}")
+            workflow_def = await engine.load_workflow(workflow_path)
+            
+            rprint(f"[blue]Executing workflow:[/blue] {workflow_def.get('name', 'unnamed')}")
+            
+            result = await engine.execute_workflow(workflow_def, context)
+            
+            # Format output
+            if output_format == 'yaml':
+                output_data = yaml.dump(result.__dict__, default_flow_style=False)
+            else:
+                output_data = json.dumps(result.__dict__, indent=2, default=str)
+            
+            # Save or print results
+            if output:
+                with open(output, 'w') as f:
+                    f.write(output_data)
+                rprint(f"[green]Results saved to {output}[/green]")
+            else:
+                console.print(output_data)
+            
+            # Print summary
+            status_color = "green" if result.status == "completed" else ("yellow" if result.status == "partial" else "red")
+            rprint(f"\n[bold]Workflow Status:[/bold] [{status_color}]{result.status}[/{status_color}]")
+            rprint(f"[bold]Steps Completed:[/bold] {len(result.steps_completed)}")
+            rprint(f"[bold]Duration:[/bold] {result.total_duration:.2f}s")
+            
+            if result.errors:
+                rprint(f"[bold red]Errors:[/bold red] {len(result.errors)}")
+                for error in result.errors:
+                    rprint(f"  [red]•[/red] {error}")
+            
+        except Exception as e:
+            rprint(f"[red]Workflow execution failed: {e}[/red]")
+            if verbose:
+                import traceback
+                traceback.print_exc()
+            raise typer.Exit(1)
+    
+    asyncio.run(_run_workflow())
+
+@workflow_app.command("template")
+def workflow_template(
+    output_file: str = typer.Argument(..., help="Output file path for template"),
+    template_type: str = typer.Option("basic", "--type", "-t", help="Template type (basic, audit, assessment)")
+):
+    """Generate a workflow template file."""
+    from pathlib import Path
+    
+    templates = {
+        "basic": {
+            "name": "basic_security_workflow",
+            "description": "Basic security assessment workflow",
+            "continue_on_error": True,
+            "steps": [
+                {
+                    "name": "static_analysis",
+                    "task": "web2-static",  
+                    "params": {
+                        "file_path": "test_code.php",
+                        "language": "php"
+                    }
+                },
+                {
+                    "name": "vulnerability_scoring",
+                    "task": "cvss",
+                    "params": {
+                        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+                    },
+                    "depends_on": ["static_analysis"]
+                }
+            ]
+        },
+        "audit": {
+            "name": "smart_contract_audit",
+            "description": "Complete smart contract security audit",
+            "continue_on_error": True,
+            "steps": [
+                {
+                    "name": "slither_analysis",
+                    "task": "slither",
+                    "params": {
+                        "contract_path": "test_contract.sol",
+                        "format": "json"
+                    }
+                },
+                {
+                    "name": "mythril_analysis", 
+                    "task": "mythril",
+                    "params": {
+                        "contract_path": "test_contract.sol",
+                        "timeout": 300
+                    },
+                    "depends_on": ["slither_analysis"]
+                },
+                {
+                    "name": "cvss_scoring",
+                    "task": "cvss",
+                    "params": {
+                        "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+                    },
+                    "depends_on": ["mythril_analysis"]
+                }
+            ]
+        },
+        "assessment": {
+            "name": "comprehensive_assessment",
+            "description": "Comprehensive security assessment workflow",
+            "continue_on_error": True,
+            "steps": [
+                {
+                    "name": "contract_scan",
+                    "task": "slither",
+                    "params": {
+                        "contract_path": "test_contract.sol"
+                    }
+                },
+                {
+                    "name": "web_scan",
+                    "task": "web2-static",
+                    "params": {
+                        "file_path": "test_vulnerable.php",
+                        "language": "php"
+                    }
+                },
+                {
+                    "name": "shellcode_gen",
+                    "task": "shellcode",
+                    "params": {
+                        "arch": "amd64",
+                        "payload": "/bin/sh"
+                    },
+                    "depends_on": ["contract_scan", "web_scan"]
+                }
+            ]
+        }
+    }
+    
+    if template_type not in templates:
+        rprint(f"[red]Unknown template type: {template_type}[/red]")
+        rprint(f"Available types: {', '.join(templates.keys())}")
+        raise typer.Exit(1)
+    
+    template_workflow = templates[template_type]
+    output_path = Path(output_file)
+    
+    try:
+        if output_path.suffix.lower() in ['.yaml', '.yml']:
+            with open(output_path, 'w') as f:
+                yaml.dump(template_workflow, f, default_flow_style=False)
+        else:
+            with open(output_path, 'w') as f:
+                json.dump(template_workflow, f, indent=2)
+        
+        rprint(f"[green]Workflow template created:[/green] {output_path}")
+        rprint(f"[blue]Template type:[/blue] {template_type}")
+        rprint(f"[blue]Steps:[/blue] {len(template_workflow['steps'])}")
+        
+    except Exception as e:
+        rprint(f"[red]Error creating template: {e}[/red]")
+        raise typer.Exit(1)
+
+@workflow_app.command("list")
+def workflow_list():
+    """List available workflow templates and tasks."""
+    
+    # Show available template types
+    rprint("[bold blue]Available Template Types:[/bold blue]")
+    templates = [
+        ("basic", "Basic security assessment workflow"),
+        ("audit", "Complete smart contract security audit"),
+        ("assessment", "Comprehensive security assessment workflow")
+    ]
+    
+    for name, description in templates:
+        rprint(f"  [cyan]{name}[/cyan]: {description}")
+    
+    # Show available tasks for workflows
+    rprint("\n[bold blue]Available Tasks for Workflows:[/bold blue]")
+    tasks = PluginRegistry.list_tasks()
+    
+    # Group tasks by category
+    categories = {}
+    for task_name in tasks:
+        if 'audit' in task_name or 'cvss' in task_name or 'slither' in task_name or 'mythril' in task_name:
+            category = "Audit"
+        elif 'web' in task_name or 'fuzzer' in task_name:
+            category = "Web Security"
+        elif 'shell' in task_name or 'autopwn' in task_name:
+            category = "Exploit"
+        elif 'chain' in task_name or 'tx' in task_name or 'rwa' in task_name:
+            category = "Blockchain"
+        elif 'c2' in task_name or 'lateral' in task_name or 'social' in task_name:
+            category = "Red Team"
+        elif 'memory' in task_name or 'disk' in task_name or 'chain-ir' in task_name:
+            category = "Forensics"
+        elif 'llm' in task_name or 'prompt' in task_name:
+            category = "AI Security"
+        else:
+            category = "Other"
+        
+        if category not in categories:
+            categories[category] = []
+        categories[category].append(task_name)
+    
+    for category, task_names in sorted(categories.items()):
+        rprint(f"\n  [bold yellow]{category}:[/bold yellow]")
+        for task_name in sorted(task_names):
+            rprint(f"    • {task_name}")
 
 @app.command()
 def version():

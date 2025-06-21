@@ -116,6 +116,11 @@ class PluginRegistry:
         """Get the task class for a given name."""
         return cls._tasks.get(name)
 
+    @classmethod 
+    def get_task(cls, name: str) -> Optional[Type[Task]]:
+        """Get the task class for a given name (alias for get_task_class)."""
+        return cls.get_task_class(name)
+
     @classmethod
     def clear(cls) -> None:
         """Clear all registered tasks (useful for testing)."""

@@ -20,11 +20,13 @@ sentinelx/blockchain/__init__.py
 sentinelx/blockchain/monitor.py
 sentinelx/blockchain/replay.py
 sentinelx/blockchain/rwascan.py
+sentinelx/cli/workflow.py
 sentinelx/core/__init__.py
 sentinelx/core/context.py
 sentinelx/core/registry.py
 sentinelx/core/task.py
 sentinelx/core/utils.py
+sentinelx/core/workflow.py
 sentinelx/exploit/__init__.py
 sentinelx/exploit/exploit_gen.py
 sentinelx/exploit/fuzzing.py

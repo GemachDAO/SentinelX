@@ -57,7 +57,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "sentinelx=sentinelx.cli:app",
+            "sentinelx=sentinelx.cli:main",
         ],
         "sentinelx.tasks": [
             "slither=sentinelx.audit.smart_contract:SlitherScan",
@@ -66,13 +66,15 @@ setup(
             "web2-static=sentinelx.audit.web2_static:Web2Static",
             "fuzzer=sentinelx.exploit.fuzzing:Fuzzer",
             "shellcode=sentinelx.exploit.shellcode:ShellcodeGen",
+            "autopwn=sentinelx.exploit.exploit_gen:AutoPwn",
             "chain-monitor=sentinelx.blockchain.monitor:ChainMonitor",
+            "tx-replay=sentinelx.blockchain.replay:TxReplay",
+            "rwa-scan=sentinelx.blockchain.rwascan:RwaScan",
             "llm-assist=sentinelx.ai.llm_assist:LLMAssist",
+            "prompt-injection=sentinelx.ai.adversarial:PromptInjection",
             "c2=sentinelx.redteam.c2:C2Server",
             "lateral-move=sentinelx.redteam.lateral_move:LateralMove",
             "social-eng=sentinelx.redteam.social_eng:SocialEngineering",
-            "tx-replay=sentinelx.blockchain.replay:TxReplay",
-            "rwa-scan=sentinelx.blockchain.rwascan:RwaScan",
             "memory-forensics=sentinelx.forensic.memory:MemoryForensics",
             "disk-forensics=sentinelx.forensic.disk:DiskForensics",
             "chain-ir=sentinelx.forensic.chain_ir:ChainIR",

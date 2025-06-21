@@ -53,24 +53,28 @@ class Context(BaseModel):
         arbitrary_types_allowed = True
 
     @classmethod
-    def load(cls, path: str = "config.yaml") -> "Context":
+    def load(cls, path: Optional[str] = "config.yaml") -> "Context":
         """Load configuration from YAML file with environment variable resolution."""
-        config_path = Path(path)
-        
-        if not config_path.exists():
-            logger.warning(f"Configuration file {path} not found, using defaults")
+        if path is None:
+            logger.warning("No configuration file specified, using defaults")
             data: Dict[str, Any] = {}
         else:
-            try:
-                with open(config_path, "r") as f:
-                    data = yaml.safe_load(f) or {}
-                logger.info(f"Loaded configuration from {config_path}")
-            except yaml.YAMLError as e:
-                logger.error(f"Failed to parse YAML configuration: {e}")
-                raise ValueError(f"Invalid YAML in {path}: {e}")
-            except Exception as e:
-                logger.error(f"Failed to load configuration file: {e}")
-                raise ValueError(f"Cannot load config file {path}: {e}")
+            config_path = Path(path)
+            
+            if not config_path.exists():
+                logger.warning(f"Configuration file {path} not found, using defaults")
+                data: Dict[str, Any] = {}
+            else:
+                try:
+                    with open(config_path, "r") as f:
+                        data = yaml.safe_load(f) or {}
+                    logger.info(f"Loaded configuration from {config_path}")
+                except yaml.YAMLError as e:
+                    logger.error(f"Failed to parse YAML configuration: {e}")
+                    raise ValueError(f"Invalid YAML in {path}: {e}")
+                except Exception as e:
+                    logger.error(f"Failed to load configuration file: {e}")
+                    raise ValueError(f"Cannot load config file {path}: {e}")
         
         # Resolve environment variables
         resolved = cls._resolve_env_vars(data)
