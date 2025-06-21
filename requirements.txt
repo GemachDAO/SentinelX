@@ -55,6 +55,9 @@ uvicorn[standard]>=0.23.0
 
 # Visualization and reporting
 graphviz>=0.20.0
+markdown>=3.0.0
+weasyprint>=65.0
+plotly>=5.0.0
 
 # Development and testing
 pytest>=7.0.0

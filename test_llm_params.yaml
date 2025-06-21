@@ -1,2 +1,0 @@
-analyze_code: "var query = 'SELECT * FROM users WHERE id = ' + user_input;"
-type: "code_review"

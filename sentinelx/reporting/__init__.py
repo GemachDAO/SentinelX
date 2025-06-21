@@ -357,12 +357,17 @@ class ReportGenerator:
     
     def render_markdown(self, report: SecurityReport) -> str:
         """Render report as Markdown."""
+        # Handle None values safely
+        execution_time_str = report.execution_time.strftime('%Y-%m-%d %H:%M:%S UTC') if report.execution_time else "N/A"
+        duration_str = f"{report.duration:.2f}s" if report.duration is not None else "N/A"
+        status_str = report.status.title() if report.status else "Unknown"
+        
         md_content = f"""# {report.title}
 
 **Workflow:** {report.workflow_name}  
-**Execution Time:** {report.execution_time.strftime('%Y-%m-%d %H:%M:%S UTC')}  
-**Duration:** {report.duration:.2f}s  
-**Status:** {report.status.title()}  
+**Execution Time:** {execution_time_str}  
+**Duration:** {duration_str}  
+**Status:** {status_str}  
 
 ## Executive Summary
 
@@ -442,3 +447,82 @@ class ReportGenerator:
             self.export_json(report, output_path.with_suffix('.json'))
         else:
             raise ValueError(f"Unsupported format: {format}")
+    
+    def generate_summary(self, report: SecurityReport) -> Dict[str, Any]:
+        """Generate executive summary from report data."""
+        total_vulns = 0
+        severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+        
+        # Count vulnerabilities across all sections
+        for section in report.sections:
+            if section.data and isinstance(section.data, dict):
+                if "vulnerabilities" in section.data:
+                    vulns = section.data["vulnerabilities"]
+                    if isinstance(vulns, list):
+                        total_vulns += len(vulns)
+                        for vuln in vulns:
+                            if isinstance(vuln, dict) and "severity" in vuln:
+                                severity = vuln["severity"].lower()
+                                if severity in severity_counts:
+                                    severity_counts[severity] += 1
+        
+        return {
+            "total_vulnerabilities": total_vulns,
+            "severity_breakdown": severity_counts,
+            "status": report.status,
+            "execution_time": report.execution_time,
+            "duration": report.duration,
+            "workflow_name": report.workflow_name
+        }
+    
+    def create_vulnerability_chart(self, severity_counts: Dict[str, int]) -> List[Dict]:
+        """Create Plotly chart data for vulnerability severity distribution."""
+        if not severity_counts or sum(severity_counts.values()) == 0:
+            return []
+        
+        # Filter out zero counts and prepare colors
+        labels = []
+        values = []
+        colors = []
+        color_map = {
+            'critical': '#dc3545',
+            'high': '#fd7e14', 
+            'medium': '#ffc107',
+            'low': '#28a745',
+            'info': '#17a2b8'
+        }
+        
+        for severity, count in severity_counts.items():
+            if count > 0:
+                labels.append(severity.title())
+                values.append(count)
+                colors.append(color_map.get(severity, '#6c757d'))
+        
+        return [{
+            'type': 'pie',
+            'labels': labels,
+            'values': values,
+            'marker': {'colors': colors},
+            'title': {'text': 'Vulnerability Distribution by Severity'}
+        }]
+    
+    def create_timeline_chart(self, report: SecurityReport) -> List[Dict]:
+        """Create timeline chart for report execution phases."""
+        if not report.execution_time:
+            return []
+        
+        # Create simple timeline data
+        timeline_data = []
+        base_time = report.execution_time
+        
+        for i, section in enumerate(report.sections):
+            timeline_data.append({
+                'x': [base_time],
+                'y': [section.title],
+                'type': 'scatter',
+                'mode': 'markers',
+                'marker': {'size': 10},
+                'name': f'Step {i+1}'
+            })
+        
+        return timeline_data
