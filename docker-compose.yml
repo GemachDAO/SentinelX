@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  sentinelx:
+    build: .
+    container_name: sentinelx-framework
+    volumes:
+      # Mount host directories for input/output
+      - ./reports:/home/sentinelx/reports
+      - ./logs:/home/sentinelx/logs
+      - ./data:/home/sentinelx/data
+      - ./config:/home/sentinelx/config
+      - ./workflows:/home/sentinelx/workflows
+    environment:
+      - SENTINELX_LOG_LEVEL=INFO
+      - SENTINELX_DATA_DIR=/home/sentinelx/data
+      - SENTINELX_REPORTS_DIR=/home/sentinelx/reports
+    networks:
+      - sentinelx-net
+    # Uncomment for web interface (future feature)
+    # ports:
+    #   - "8080:8080"
+
+  # Isolated sandbox container for dangerous tasks
+  sentinelx-sandbox:
+    build: 
+      context: .
+      dockerfile: Dockerfile.sandbox
+    container_name: sentinelx-sandbox
+    volumes:
+      - ./sandbox:/home/sentinelx/sandbox
+    environment:
+      - SENTINELX_SANDBOX_MODE=true
+    networks:
+      - sentinelx-sandbox-net
+    # Restricted resources for safety
+    mem_limit: 512m
+    cpus: 0.5
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN  # Only if network testing needed
+
+networks:
+  sentinelx-net:
+    driver: bridge
+  sentinelx-sandbox-net:
+    driver: bridge
+    internal: true  # No external network access for sandbox
+
+volumes:
+  sentinelx-data:
+  sentinelx-reports:

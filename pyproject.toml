@@ -4,38 +4,89 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sentinelx"
-version = "0.1.0"
-description = "A modular Python framework for offensive and defensive security operations across Web2 and Web3"
+version = "1.0.0"
+description = "Modular Python framework for offensive and defensive security operations across Web2 and Web3"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "SentinelX Team"},
+    {name = "SentinelX Team", email = "dev@sentinelx.io"}
 ]
-keywords = ["security", "blockchain", "web3", "penetration-testing", "audit"]
+maintainers = [
+    {name = "SentinelX Team", email = "dev@sentinelx.io"}
+]
+keywords = [
+    "security", "penetration-testing", "web3", "blockchain", "forensics", 
+    "red-team", "vulnerability-assessment", "security-framework", "cybersecurity"
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
     "Intended Audience :: Information Technology",
-    "Topic :: Security",
-    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Testing"
 ]
 dependencies = [
+    # Core dependencies
+    "click>=8.0.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.0.0",
+    "aiohttp>=3.8.0",
+    "aiofiles>=0.8.0",
+    
+    # Security tools
+    "requests>=2.28.0",
+    "cryptography>=3.4.0",
+    "paramiko>=2.9.0",
+    "scapy>=2.4.5",
+    
+    # Web3 and blockchain
+    "web3>=6.0.0",
+    "eth-account>=0.8.0",
+    "py-solc-x>=1.12.0",
+    
+    # Analysis and forensics
+    "volatility3>=2.4.0",
+    "yara-python>=4.2.0",
+    "python-magic>=0.4.24",
+    
+    # AI and ML
+    "transformers>=4.20.0",
+    "torch>=1.12.0",
+    "numpy>=1.21.0",
+    "scikit-learn>=1.1.0",
+    
+    # Reporting
+    "markdown>=3.4.0",
+    "weasyprint>=57.0",
+    "plotly>=5.10.0",
+    
+    # Performance and monitoring
+    "psutil>=5.9.0",
+    "memory-profiler>=0.60.0",
+    "line-profiler>=4.0.0",
+    
+    # Deployment
+    "docker>=6.0.0",
+    
+    # Legacy dependencies (keep for compatibility)
     "typer>=0.9.0",
     "rich>=13.0.0",
     "pydantic>=2.0.0",
     "fastapi>=0.100.0",
     "uvicorn[standard]>=0.23.0",
     "graphviz>=0.20.0",
-    "PyYAML>=6.0.0",
-    "aiohttp>=3.8.0",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
 ]
@@ -72,7 +123,8 @@ blockchain = [
 Homepage = "https://github.com/sentinelx/sentinelx"
 Documentation = "https://sentinelx.readthedocs.io"
 Repository = "https://github.com/sentinelx/sentinelx"
-Issues = "https://github.com/sentinelx/sentinelx/issues"
+"Bug Tracker" = "https://github.com/sentinelx/sentinelx/issues"
+Changelog = "https://github.com/sentinelx/sentinelx/blob/main/CHANGELOG.md"
 
 [project.scripts]
 sentinelx = "sentinelx.cli:main"
@@ -111,6 +163,17 @@ prompt-injection = "sentinelx.ai.adversarial:PromptInjection"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["sentinelx*"]
+
+[tool.setuptools.package-data]
+sentinelx = [
+    "templates/*.html",
+    "templates/*.md", 
+    "templates/*.yaml",
+    "assets/*.css",
+    "assets/*.js",
+    "config/*.yaml",
+    "workflows/*.yaml"
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report.title }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+        .meta-info {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .meta-info h3 {
+            margin-top: 0;
+            color: #34495e;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .meta-item {
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .meta-item strong {
+            color: #2c3e50;
+        }
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .summary h2 {
+            margin-top: 0;
+            font-size: 1.8em;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .summary-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        .summary-item .number {
+            font-size: 2em;
+            font-weight: bold;
+            display: block;
+        }
+        .summary-item .label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        .section.critical { border-left-color: #e74c3c; }
+        .section.high { border-left-color: #f39c12; }
+        .section.medium { border-left-color: #f1c40f; }
+        .section.low { border-left-color: #27ae60; }
+        .section.info { border-left-color: #3498db; }
+        .section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+        }
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 10px;
+        }
+        .severity-critical { background: #e74c3c; color: white; }
+        .severity-high { background: #f39c12; color: white; }
+        .severity-medium { background: #f1c40f; color: #2c3e50; }
+        .severity-low { background: #27ae60; color: white; }
+        .severity-info { background: #3498db; color: white; }
+        .chart-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .alert {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{ report.title }}</h1>
+            <div class="subtitle">Security Assessment Report</div>
+        </div>
+
+        <div class="meta-info">
+            <h3>Assessment Information</h3>
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <strong>Workflow:</strong><br>
+                    {{ report.workflow_name }}
+                </div>
+                <div class="meta-item">
+                    <strong>Execution Time:</strong><br>
+                    {{ report.execution_time.strftime('%Y-%m-%d %H:%M:%S UTC') if report.execution_time else 'Unknown' }}
+                </div>
+                <div class="meta-item">
+                    <strong>Duration:</strong><br>
+                    {{ "%.2f"|format(report.duration) }}s
+                </div>
+                <div class="meta-item">
+                    <strong>Status:</strong><br>
+                    <span class="severity-badge severity-{{ report.status }}">{{ report.status.title() }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if report.summary %}
+        <div class="summary">
+            <h2>Executive Summary</h2>
+            <div class="summary-grid">
+                {% for key, value in report.summary.items() %}
+                <div class="summary-item">
+                    <span class="number">{{ value }}</span>
+                    <span class="label">{{ key.replace('_', ' ').title() }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <h2>Detailed Results</h2>
+        
+        {% for section in report.sections %}
+        <div class="section {{ section.severity }}">
+            <h3>
+                {{ section.title }}
+                <span class="severity-badge severity-{{ section.severity }}">{{ section.severity }}</span>
+            </h3>
+            
+            <div class="content">
+                {{ section.content | safe }}
+            </div>
+            
+            {% if section.chart_data %}
+            <div class="chart-container">
+                <div id="chart-{{ loop.index0 }}"></div>
+            </div>
+            {% endif %}
+            
+            {% if section.data %}
+            <details style="margin-top: 15px;">
+                <summary style="cursor: pointer; font-weight: bold;">Raw Data</summary>
+                <pre>{{ section.data | tojson(indent=2) }}</pre>
+            </details>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="footer">
+            <p>Generated by SentinelX Security Framework</p>
+            <p>Report generated on {{ report.execution_time.strftime('%Y-%m-%d at %H:%M:%S UTC') if report.execution_time else 'Unknown Date' }}</p>
+        </div>
+    </div>
+
+    <!-- Include Plotly for charts if needed -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        // Render any embedded charts
+        {% for section in report.sections %}
+        {% if section.chart_data %}
+        Plotly.newPlot('chart-{{ loop.index0 }}', {{ section.chart_data | tojson | safe }});
+        {% endif %}
+        {% endfor %}
+    </script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+# Hardened sandbox container for dangerous security tasks
+FROM python:3.11-slim-bullseye
+
+# Minimal system dependencies only
+RUN apt-get update && apt-get install -y \
+    curl wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create restricted user
+RUN useradd --create-home --shell /bin/bash --no-user-group sandbox
+WORKDIR /home/sandbox
+
+# Copy only essential dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Copy source code
+COPY . .
+RUN pip install --no-cache-dir --user -e .
+
+# Create restricted directories
+RUN mkdir -p /home/sandbox/sandbox /home/sandbox/tmp
+RUN chown -R sandbox:sandbox /home/sandbox
+
+# Switch to restricted user
+USER sandbox
+
+# Set PATH to include user pip binaries
+ENV PATH="/home/sandbox/.local/bin:$PATH"
+
+# Default to interactive shell for manual task execution
+CMD ["/bin/bash"]
