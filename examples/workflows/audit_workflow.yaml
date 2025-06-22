@@ -1,0 +1,212 @@
+# Smart Contract Security Audit Workflow
+# Complete security assessment workflow for smart contracts
+
+workflow:
+  name: "Smart Contract Security Audit"
+  version: "1.0.0"
+  description: "Comprehensive security audit workflow for Solidity smart contracts"
+  author: "SentinelX Security Team"
+  
+  # Global variables
+  variables:
+    contract_path: "${CONTRACT_PATH}"
+    output_dir: "./audit_results"
+    report_format: "html"
+    max_analysis_time: 900  # 15 minutes
+    
+  # Workflow configuration
+  config:
+    max_parallel: 2
+    timeout: 1800  # 30 minutes total
+    retry_failed: true
+    retry_count: 2
+    retry_delay: 10
+    
+  # Pre-execution checks
+  prerequisites:
+    - check: "file_exists"
+      target: "${contract_path}"
+      message: "Contract file must exist"
+    - check: "directory_writable"
+      target: "${output_dir}"
+      message: "Output directory must be writable"
+  
+  # Workflow steps
+  steps:
+    # Step 1: Static Analysis with Slither
+    - name: "slither_analysis"
+      task: "slither"
+      description: "Static analysis using Slither analyzer"
+      parameters:
+        contract_path: "${contract_path}"
+        format: "json"
+        output_file: "${output_dir}/slither_results.json"
+      timeout: 300
+      retry_on_failure: true
+      on_success:
+        - action: "log"
+          message: "Slither analysis completed successfully"
+      on_failure:
+        - action: "log"
+          level: "warning"
+          message: "Slither analysis failed, continuing with other tools"
+    
+    # Step 2: Symbolic Execution with Mythril (parallel with Slither)
+    - name: "mythril_analysis"
+      task: "mythril"
+      description: "Symbolic execution using Mythril"
+      parameters:
+        contract_path: "${contract_path}"
+        timeout: "${max_analysis_time}"
+        max_depth: 15
+        strategy: "dfs"
+        output_file: "${output_dir}/mythril_results.json"
+      timeout: 900
+      parallel_with: ["slither_analysis"]
+      retry_on_failure: true
+      on_success:
+        - action: "log"
+          message: "Mythril analysis completed successfully"
+      on_failure:
+        - action: "log"
+          level: "warning"
+          message: "Mythril analysis failed, continuing with other tools"
+    
+    # Step 3: CVSS Scoring (depends on analysis results)
+    - name: "cvss_scoring"
+      task: "cvss"
+      description: "Calculate CVSS scores for identified vulnerabilities"
+      parameters:
+        # These would be dynamically populated from previous steps
+        vulnerabilities: "${slither_analysis.results.vulnerabilities}"
+        issues: "${mythril_analysis.results.issues}"
+        output_file: "${output_dir}/cvss_scores.json"
+      depends_on: ["slither_analysis", "mythril_analysis"]
+      timeout: 60
+      continue_on_failure: true
+    
+    # Step 4: Generate comprehensive report
+    - name: "generate_report"
+      task: "report-generator"
+      description: "Generate comprehensive security audit report"
+      parameters:
+        template: "smart_contract_audit" 
+        format: "${report_format}"
+        output_file: "${output_dir}/audit_report.${report_format}"
+        inputs:
+          - "${slither_analysis.results}"
+          - "${mythril_analysis.results}"
+          - "${cvss_scoring.results}"
+        include_recommendations: true
+        include_charts: true
+      depends_on: ["slither_analysis", "mythril_analysis", "cvss_scoring"]
+      timeout: 120
+      required: true  # This step must succeed
+    
+    # Step 5: Threat modeling (optional enhancement)
+    - name: "threat_modeling"
+      task: "threat-model"
+      description: "Generate threat model diagrams"
+      parameters:
+        contract_path: "${contract_path}"
+        output_dir: "${output_dir}/threat_model"
+        format: "svg"
+        include_attack_vectors: true
+      depends_on: ["slither_analysis"]
+      timeout: 180
+      optional: true  # This step is optional
+      
+  # Post-execution actions
+  post_execution:
+    - action: "archive_results"
+      target: "${output_dir}"
+      format: "zip"
+      filename: "audit_${timestamp}.zip"
+    
+    - action: "notify"
+      type: "email"
+      recipients: ["security@company.com"]
+      subject: "Smart Contract Audit Completed: ${contract_path}"
+      template: "audit_notification"
+      attach_report: true
+    
+    - action: "log"
+      message: "Smart contract audit workflow completed"
+      level: "info"
+  
+  # Error handling
+  on_failure:
+    - action: "log"
+      level: "error"
+      message: "Audit workflow failed: ${error_message}"
+    
+    - action: "notify"
+      type: "email"
+      recipients: ["security@company.com"]
+      subject: "FAILED: Smart Contract Audit - ${contract_path}"
+      message: "The audit workflow failed. Please check logs for details."
+    
+    - action: "cleanup"
+      target: "${output_dir}/temp"
+  
+  # Success actions
+  on_success:
+    - action: "log"
+      message: "Smart contract audit completed successfully"
+    
+    - action: "update_dashboard"
+      metric: "audits_completed"
+      value: 1
+  
+  # Cleanup actions
+  cleanup:
+    - action: "remove_temp_files"
+      pattern: "${output_dir}/temp/*"
+    
+    - action: "compress_logs"
+      target: "${output_dir}/logs"
+
+# Workflow metadata
+metadata:
+  tags: ["security", "smart-contract", "audit", "slither", "mythril"]
+  category: "Security Assessment"
+  complexity: "intermediate"
+  estimated_duration: "15-30 minutes"
+  
+  # Documentation
+  documentation:
+    description: |
+      This workflow performs a comprehensive security audit of Solidity smart contracts
+      using industry-standard tools and methodologies. It includes:
+      
+      1. Static analysis with Slither
+      2. Symbolic execution with Mythril  
+      3. CVSS vulnerability scoring
+      4. Automated report generation
+      5. Optional threat modeling
+      
+      The workflow is designed to run in parallel where possible to minimize execution time
+      while providing comprehensive security coverage.
+    
+    prerequisites:
+      - Solidity contract file (.sol)
+      - Slither analyzer installed
+      - Mythril security analyzer installed
+      - Write permissions to output directory
+    
+    outputs:
+      - Detailed vulnerability analysis
+      - CVSS scores and risk assessment
+      - Comprehensive HTML/PDF report
+      - Threat model diagrams (optional)
+      - Archived results package
+    
+    usage_examples:
+      - description: "Audit a single contract"
+        command: "sentinelx workflow run audit_workflow.yaml -v CONTRACT_PATH=MyToken.sol"
+      
+      - description: "Audit with custom output directory"
+        command: "sentinelx workflow run audit_workflow.yaml -v CONTRACT_PATH=Token.sol -v output_dir=./my_audit"
+      
+      - description: "Generate PDF report"
+        command: "sentinelx workflow run audit_workflow.yaml -v CONTRACT_PATH=Token.sol -v report_format=pdf"

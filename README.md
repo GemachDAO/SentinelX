@@ -1,132 +1,349 @@
-# SentinelX
+# SentinelX - Advanced Security Framework
 
-SentinelX is a modular Python framework for offensive and defensive security operations across Web2 and Web3.  It exposes a plugin-based task system so additional tooling can be integrated without modifying the core framework.
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Framework](https://img.shields.io/badge/Type-Security%20Framework-red.svg)](https://github.com/sentinelx)
 
-## Features
+**SentinelX** is a production-ready Python framework for offensive and defensive security operations across Web2 and Web3 environments. It provides a comprehensive suite of security tools with a modern CLI interface, workflow orchestration, and extensible plugin architecture.
 
-- **Unified runtime** – the `Task` abstraction enables asynchronous operations and provides hooks for setup and teardown.  Tasks are discovered through a `PluginRegistry` and instantiated with a `Context` loaded from YAML configuration.
-- **Threat modeling** utilities for building simple STRIDE style models and rendering diagrams.
-- **Auditing** modules for smart contracts and Web2 applications.
-- **Exploit development** helpers including fuzzing and automatic exploit generation.
-- **Red team** components such as a minimal C2 server and lateral movement helpers.
-- **Blockchain monitoring** tasks for transaction replay or real world asset scanning.
-- **Forensics** utilities for memory, disk and on‑chain incident response.
-- **AI assistance** for prompt crafting or LLM based helpers.
-- Command line interface built with [Typer](https://typer.tiangolo.com) to run any registered task.
+## 🎯 Features
 
-## Directory structure
+### Core Capabilities
+- **18+ Security Tasks** across all major security domains
+- **Workflow Orchestration** with dependency management and error handling
+- **Professional CLI Interface** with rich formatting and interactive modes
+- **Plugin Architecture** for easy extension and customization
+- **Advanced Reporting** with multiple output formats
+- **Performance Profiling** and benchmarking tools
+- **Docker Integration** for sandboxed execution
+- **Configuration Management** with validation and templates
+
+### Security Domains
+- 🔒 **Smart Contract Auditing** (Slither, Mythril, CVSS)
+- 💥 **Exploit Development** (Shellcode, Fuzzing, AutoPwn)
+- ⛓️ **Blockchain Security** (Chain monitoring, Transaction analysis)
+- 🎭 **Red Team Operations** (C2, Lateral movement, Social engineering)
+- 🔍 **Digital Forensics** (Memory, Disk, Blockchain IR)
+- 🤖 **AI Security** (LLM assistance, Prompt injection testing)
+- 🌐 **Web Security** (Static analysis, Vulnerability scanning)
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/sentinelx.git
+cd sentinelx
+
+# Install in development mode
+pip install -e .
+
+# Verify installation
+python -c "import sentinelx; print('✅ SentinelX installed successfully')"
+```
+
+### Basic Usage
+
+```bash
+# List all available tasks
+sentinelx list
+
+# Get information about a specific task
+sentinelx info slither
+
+# Run a task
+sentinelx run cvss -p "{vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'}"
+
+# Interactive mode
+sentinelx interactive
+
+# Search for tasks
+sentinelx search "smart contract"
+```
+
+### Workflow Example
+
+```bash
+# Generate a workflow template
+sentinelx workflow template audit_workflow.yaml --type audit
+
+# Run the workflow
+sentinelx workflow run audit_workflow.yaml
+
+# List available workflows
+sentinelx workflow list
+```
+
+## 🏗️ Architecture
+
+SentinelX follows a modular architecture with clear separation of concerns:
 
 ```
 sentinelx/
-├── core/            # runtime, plugin system and utilities
-│   ├── context.py
-│   ├── registry.py
-│   ├── task.py
-│   └── utils.py
-├── threatmodel/     # threat modeling helpers
-│   ├── model.py
-│   └── diagrams.py
-├── audit/           # static analysis modules
-│   ├── smart_contract.py
-│   ├── web2_static.py
-│   └── cvss.py
-├── exploit/         # fuzzing and exploit generation
-│   ├── fuzzing.py
-│   ├── exploit_gen.py
-│   └── shellcode.py
-├── redteam/         # C2 server and other red team tools
-│   ├── c2.py
-│   ├── lateral_move.py
-│   └── social_eng.py
-├── blockchain/      # chain watchers and transaction tools
-│   ├── monitor.py
-│   ├── replay.py
-│   └── rwascan.py
-├── forensic/        # memory and disk forensics
-│   ├── memory.py
-│   ├── disk.py
-│   └── chain_ir.py
-├── ai/              # LLM helpers and adversarial tools
-│   ├── llm_assist.py
-│   └── adversarial.py
-└── cli.py           # entry point for running tasks
+├── core/           # Core framework components
+│   ├── registry.py # Plugin registration system
+│   ├── task.py     # Base task class and interfaces
+│   ├── context.py  # Execution context and configuration
+│   ├── workflow.py # Workflow orchestration engine
+│   └── utils.py    # Utility functions
+├── audit/          # Smart contract auditing tasks
+├── exploit/        # Exploit development tools
+├── blockchain/     # Blockchain security tools
+├── redteam/        # Red team operation tools
+├── forensic/       # Digital forensics tools
+├── ai/             # AI-powered security tools
+├── cli.py          # Command-line interface
+└── __init__.py     # Package initialization
 ```
 
-## Installation
+## 🎮 Available Commands
 
-Install dependencies and run the framework directly from the repository:
+### Core Commands
+- `list` - List all registered tasks with categorization
+- `info <task>` - Detailed information about a specific task
+- `run <task>` - Execute a security task
+- `search <query>` - Search tasks by name or description
+- `validate` - Validate tasks and configuration
+- `interactive` - Interactive task execution mode
+- `config` - Configuration management utilities
+- `version` - Show version information
+
+### Workflow Commands
+- `workflow run <file>` - Execute workflow from file
+- `workflow template <file>` - Generate workflow templates
+- `workflow list` - List available workflows and tasks
+
+### Advanced Commands (Phase 4)
+- `docker setup` - Setup Docker environment
+- `docker run <task>` - Run tasks in containers
+- `perf profile <task>` - Performance profiling
+- `perf benchmark <tasks>` - Benchmark multiple tasks
+- `report generate <file>` - Generate professional reports
+
+## 🔧 Configuration
+
+Create a configuration file to customize SentinelX:
 
 ```bash
-python -m pip install -r requirements.txt
+# Initialize configuration interactively
+sentinelx config init
+
+# Show current configuration
+sentinelx config show
+
+# Validate configuration
+sentinelx config validate
 ```
 
-## Configuration
-
-Create a `config.yaml` (see `config.yaml.example`) to define network settings and secrets.  Values prefixed with `ENV:` are resolved from environment variables when `Context.load()` is called.
+Example configuration:
 
 ```yaml
-network:
-  http_proxy: http://127.0.0.1:8080
-  retries: 3
+version: "1.0"
+debug: false
+log_level: "INFO"
+output_dir: "./outputs"
+temp_dir: "./temp"
 
 blockchain:
-  rpc_urls:
-    - https://arb1.gemachdao.io
-    - https://solana-mainnet.gemachdao.io
+  ethereum_rpc: "https://mainnet.infura.io/v3/YOUR_KEY"
+  polygon_rpc: "https://polygon-rpc.com"
+  timeout: 30
 
-secrets:
-  etherscan_api: ENV:ETHERSCAN_APIKEY
-  openai: ENV:OPENAI_KEY
+openai:
+  api_key: "your-openai-key"
+  model: "gpt-3.5-turbo"
+  max_tokens: 1000
 ```
 
-## CLI usage
+## 🛡️ Security Tasks
 
-The CLI loads the configuration, discovers plugins and runs the specified task.
-
+### Smart Contract Auditing
 ```bash
-python -m sentinelx.cli run <task-name> --params '<yaml_or_json>'
+# Slither analysis
+sentinelx run slither -p "{contract_path: 'contract.sol', format: 'json'}"
+
+# Mythril analysis
+sentinelx run mythril -p "{contract_path: 'contract.sol', timeout: 300}"
+
+# CVSS scoring
+sentinelx run cvss -p "{vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'}"
 ```
 
-Example:
-
+### Exploit Development
 ```bash
-python -m sentinelx.cli run slither --params '{sol_file: MyToken.sol}'
+# Generate shellcode
+sentinelx run shellcode -p "{arch: 'amd64', payload: '/bin/sh'}"
+
+# Fuzzing
+sentinelx run fuzzer -p "{target: 'http://example.com', iterations: 1000}"
 ```
 
-The CLI prints the YAML result returned by the task.
+### Web Security
+```bash
+# Static code analysis
+sentinelx run web2-static -p "{target: 'app.php', language: 'php'}"
+```
 
-## Writing plugins
+### Blockchain Security
+```bash
+# Monitor blockchain
+sentinelx run chain-monitor -p "{network: 'ethereum', addresses: ['0x123...']}"
+```
 
-Subclass `Task` to create new actions and register them with `PluginRegistry.register`.  Alternatively, expose an entry point named `sentinelx.tasks` in your project so the framework can discover your plugin automatically.
+## 🔄 Workflows
 
-## Project Status
+Workflows allow you to chain multiple security tasks together:
 
-**Phase 2 Complete!** SentinelX is now a fully functional modular security framework with 16+ implemented tasks across all security domains.
+```yaml
+name: "comprehensive_audit"
+description: "Complete security audit workflow"
+continue_on_error: true
 
-### ✅ Implemented & Tested Tasks
+steps:
+  - name: "contract_analysis"
+    task: "slither"
+    params:
+      contract_path: "contract.sol"
+  
+  - name: "deep_analysis"
+    task: "mythril"
+    params:
+      contract_path: "contract.sol"
+      timeout: 300
+    depends_on: ["contract_analysis"]
+  
+  - name: "vulnerability_scoring"
+    task: "cvss"
+    params:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    depends_on: ["deep_analysis"]
+```
 
-#### Smart Contract Security
-- **SlitherScan** - Static analysis using Slither (JSON output, vulnerability detection)
-- **MythrilScan** - Symbolic execution analysis using Mythril
-- **CVSSCalculator** - Complete CVSS v3.1 scoring and severity assessment
+## 🧪 Development
 
-#### Web Application Security  
-- **Web2Static** - Multi-language static code analysis (SQL injection, XSS, command injection detection)
-- **Fuzzer** - Intelligent security fuzzing with multiple payload types
+### Running Tests
+```bash
+# Run all tests
+pytest
 
-#### Exploit Development
-- **ShellcodeGen** - Cross-architecture shellcode generation using pwntools
-- **AutoPwn** - Automatic exploit generation (requires angr)
+# Run with coverage
+pytest --cov=sentinelx
 
-#### Blockchain Operations
-- **ChainMonitor** - Real-time blockchain monitoring (Ethereum, Polygon, BSC, Arbitrum)
-- **TxReplay** - Transaction replay and analysis
-- **RwaScan** - Real-world asset scanning
+# Run specific test file
+pytest tests/test_core.py
+```
 
-#### Red Team Operations
-- **C2Server** - Command and control infrastructure
-- **LateralMove** - Lateral movement helpers
-- **SocialEngineering** - Social engineering campaign tools
+### Creating New Tasks
+
+1. Create your task class:
+```python
+from sentinelx.core.task import Task, register_task
+
+@register_task("my-task")
+class MyTask(Task):
+    """Custom security task."""
+    
+    REQUIRED_PARAMS = ["target"]
+    OPTIONAL_PARAMS = ["timeout"]
+    
+    async def execute(self, context, **kwargs):
+        # Your task implementation
+        return {"status": "completed", "data": result}
+```
+
+2. Register and test:
+```bash
+# Verify registration
+sentinelx list | grep my-task
+
+# Test your task
+sentinelx run my-task -p "{target: 'test'}"
+```
+
+## 📚 Documentation
+
+For detailed documentation, see the [docs/](docs/) directory:
+
+### User Documentation
+- [**User Guide**](docs/USER_GUIDE.md) - Complete user documentation and tutorials
+- [**FAQ**](docs/FAQ.md) - Frequently asked questions and troubleshooting
+- [**Task Reference**](docs/TASK_REFERENCE.md) - Complete task documentation and examples
+
+### Developer Documentation  
+- [**Developer Guide**](docs/DEVELOPER_GUIDE.md) - Development and plugin creation guide
+- [**API Reference**](docs/API_REFERENCE.md) - Complete Python API documentation
+- [**Advanced Features**](docs/ADVANCED_FEATURES.md) - Docker, performance, and reporting features
+- [**Contributing Guide**](docs/CONTRIBUTING.md) - How to contribute to SentinelX
+
+### Examples and Tutorials
+- [**Examples Directory**](examples/) - Practical usage examples and tutorials
+- [**Workflow Examples**](examples/workflows/) - Pre-built security assessment workflows
+- [**Custom Task Examples**](examples/custom_task_example.py) - Complete task development examples
+
+## 🎉 Current Status
+
+**All Core Phases Complete!** SentinelX is now a production-ready security framework with:
+
+### ✅ Implemented Features
+- **18+ Security Tasks** across all major domains
+- **Complete Workflow Orchestration** with dependency resolution
+- **Professional CLI Interface** with rich formatting and interactive modes
+- **Plugin Architecture** for easy extension
+- **Advanced Reporting** and performance profiling
+- **Docker Integration** for sandboxed execution
+- **Configuration Management** with validation
+
+### Security Task Categories
+- 🔒 **Smart Contract Audit**: Slither, Mythril, CVSS
+- 💥 **Exploit Development**: Shellcode, Fuzzing, AutoPwn
+- ⛓️ **Blockchain Security**: Chain monitoring, Transaction analysis
+- 🎭 **Red Team Operations**: C2, Lateral movement, Social engineering
+- 🔍 **Digital Forensics**: Memory, Disk, Blockchain IR
+- 🤖 **AI Security**: LLM assistance, Prompt injection testing
+- 🌐 **Web Security**: Static analysis, Vulnerability scanning
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development Setup
+```bash
+# Clone repository
+git clone https://github.com/your-org/sentinelx.git
+cd sentinelx
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install in development mode
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- **Documentation**: [docs/](docs/)
+- **Issues**: [GitHub Issues](https://github.com/your-org/sentinelx/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/sentinelx/discussions)
+
+## 🎉 Acknowledgments
+
+- Built with modern Python async/await patterns
+- Uses [Typer](https://typer.tiangolo.com/) for CLI interface
+- Styled with [Rich](https://rich.readthedocs.io/) for beautiful terminal output
+- Powered by industry-standard security tools
+
+---
+
+**SentinelX** - Empowering security professionals with comprehensive, extensible, and professional security frameworks.
 
 #### Digital Forensics
 - **MemoryForensics** - Memory dump analysis
