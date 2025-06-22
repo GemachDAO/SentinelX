@@ -34,13 +34,7 @@ try:
 except ImportError:
     HAS_REPORTING = False
 
-# Web API imports (Phase 5)
-try:
-    from .web import create_app
-    import uvicorn
-    HAS_WEB = True
-except ImportError:
-    HAS_WEB = False
+
 
 # Configure logging
 logging.basicConfig(
@@ -63,11 +57,6 @@ if HAS_PERFORMANCE:
 if HAS_REPORTING:
     report_app = typer.Typer(help="Advanced reporting commands")
     app.add_typer(report_app, name="report")
-
-# Phase 5: Add web command group
-if HAS_WEB:
-    web_app = typer.Typer(help="Web API server and dashboard commands")
-    app.add_typer(web_app, name="web")
 
 # Auto-discover plugins when module is imported
 PluginRegistry.discover()
@@ -144,56 +133,228 @@ def run(
         raise typer.Exit(1)
 
 @app.command("list")
-def list_tasks():
-    """List all registered tasks."""
+def list_tasks(
+    category: Optional[str] = typer.Option(None, "--category", "-c", help="Filter by category (audit, exploit, blockchain, redteam, forensic, ai, web)"),
+    detailed: bool = typer.Option(False, "--detailed", "-d", help="Show detailed information for each task")
+):
+    """List all registered tasks, optionally filtered by category."""
     tasks = PluginRegistry.list_tasks()
     
     if not tasks:
         rprint("[yellow]No tasks registered[/yellow]")
         return
     
-    table = Table(title="Registered SentinelX Tasks")
-    table.add_column("Task Name", style="cyan")
-    table.add_column("Task Class", style="magenta")
-    table.add_column("Module", style="green")
+    # Organize tasks by category
+    categories = {
+        "Smart Contract Audit": [],
+        "Exploit Development": [],
+        "Blockchain Security": [],
+        "Red Team Operations": [],
+        "Digital Forensics": [],
+        "AI Security": [],
+        "Web Security": [],
+        "Other": []
+    }
     
-    for task_name in tasks:
+    for task_name in sorted(tasks):
         task_cls = PluginRegistry.get_task_class(task_name)
-        if task_cls:
-            table.add_row(
-                task_name,
-                task_cls.__name__,
-                task_cls.__module__
-            )
+        if not task_cls:
+            continue
+            
+        # Categorize based on task name and module
+        if any(x in task_name for x in ['slither', 'mythril', 'cvss']):
+            categories["Smart Contract Audit"].append((task_name, task_cls))
+        elif any(x in task_name for x in ['shellcode', 'fuzzer', 'autopwn']):
+            categories["Exploit Development"].append((task_name, task_cls))
+        elif any(x in task_name for x in ['chain', 'tx-replay', 'rwa']):
+            categories["Blockchain Security"].append((task_name, task_cls))
+        elif any(x in task_name for x in ['c2', 'lateral', 'social']):
+            categories["Red Team Operations"].append((task_name, task_cls))
+        elif any(x in task_name for x in ['memory', 'disk', 'forensic']):
+            categories["Digital Forensics"].append((task_name, task_cls))
+        elif any(x in task_name for x in ['llm', 'prompt', 'ai']):
+            categories["AI Security"].append((task_name, task_cls))
+        elif 'web' in task_name or 'fuzzer' in task_name:
+            categories["Web Security"].append((task_name, task_cls))
+        else:
+            categories["Other"].append((task_name, task_cls))
     
-    console.print(table)
+    # Filter by category if specified
+    if category:
+        category_map = {
+            "audit": "Smart Contract Audit",
+            "exploit": "Exploit Development", 
+            "blockchain": "Blockchain Security",
+            "redteam": "Red Team Operations",
+            "forensic": "Digital Forensics",
+            "ai": "AI Security",
+            "web": "Web Security"
+        }
+        filter_cat = category_map.get(category.lower())
+        if filter_cat and filter_cat in categories:
+            categories = {filter_cat: categories[filter_cat]}
+        else:
+            rprint(f"[red]Unknown category: {category}[/red]")
+            rprint(f"[yellow]Available categories: {', '.join(category_map.keys())}[/yellow]")
+            return
+    
+    # Display tasks by category
+    total_tasks = 0
+    for cat_name, task_list in categories.items():
+        if not task_list:
+            continue
+            
+        rprint(f"\n[bold blue]🔥 {cat_name} ({len(task_list)} tasks)[/bold blue]")
+        
+        if detailed:
+            table = Table()
+            table.add_column("Task", style="cyan")
+            table.add_column("Description", style="green")
+            table.add_column("Module", style="yellow")
+            
+            for task_name, task_cls in task_list:
+                description = (task_cls.__doc__ or "No description").split('\n')[0][:60]
+                if len(description) >= 60:
+                    description += "..."
+                table.add_row(
+                    task_name,
+                    description,
+                    task_cls.__module__.split('.')[-1]
+                )
+            console.print(table)
+        else:
+            # Simple list view
+            for task_name, task_cls in task_list:
+                description = (task_cls.__doc__ or "No description").split('\n')[0][:40]
+                if len(description) >= 40:
+                    description += "..."
+                rprint(f"  🎯 [cyan]{task_name:20}[/cyan] - {description}")
+        
+        total_tasks += len(task_list)
+    
+    rprint(f"\n[bold green]📊 Total: {total_tasks} security tasks available[/bold green]")
+    rprint(f"[dim]Use 'sentinelx info <task_name>' for detailed information[/dim]")
+    rprint(f"[dim]Use 'sentinelx list --category <cat>' to filter by category[/dim]")
 
 @app.command()
-def info(task_name: str = typer.Argument(..., help="Name of the task to get info about")):
+def info(
+    task_name: str = typer.Argument(..., help="Name of the task to get info about"),
+    examples: bool = typer.Option(False, "--examples", "-e", help="Show usage examples")
+):
     """Get detailed information about a specific task."""
     task_cls = PluginRegistry.get_task_class(task_name)
     
     if not task_cls:
-        rprint(f"[red]Task '{task_name}' not found[/red]")
-        available = ", ".join(PluginRegistry.list_tasks())
-        rprint(f"Available tasks: {available}")
+        rprint(f"[red]❌ Task '{task_name}' not found[/red]")
+        
+        # Suggest similar tasks
+        all_tasks = PluginRegistry.list_tasks()
+        similar = [t for t in all_tasks if task_name.lower() in t.lower() or t.lower() in task_name.lower()]
+        
+        if similar:
+            rprint(f"[yellow]💡 Did you mean one of these?[/yellow]")
+            for sim_task in similar[:5]:
+                rprint(f"  • {sim_task}")
+        else:
+            rprint(f"[blue]Available tasks:[/blue] {', '.join(sorted(all_tasks)[:10])}{'...' if len(all_tasks) > 10 else ''}")
+        
+        rprint(f"[dim]Use 'sentinelx list' to see all available tasks[/dim]")
         raise typer.Exit(1)
     
-    table = Table(title=f"Task Information: {task_name}")
-    table.add_column("Property", style="cyan")
-    table.add_column("Value", style="magenta")
+    # Enhanced task information display
+    rprint(f"[bold green]🎯 {task_name}[/bold green]")
+    rprint("─" * 50)
     
-    table.add_row("Name", task_name)
-    table.add_row("Class", task_cls.__name__)
-    table.add_row("Module", task_cls.__module__)
-    table.add_row("Doc", task_cls.__doc__ or "No documentation available")
+    # Basic information
+    table = Table(show_header=False, box=None)
+    table.add_column("Property", style="cyan", width=15)
+    table.add_column("Value", style="white")
     
-    # Show required parameters if defined
-    required_params = getattr(task_cls, 'REQUIRED_PARAMS', [])
-    if required_params:
-        table.add_row("Required Parameters", ", ".join(required_params))
+    table.add_row("📋 Name", task_name)
+    table.add_row("🏷️ Class", task_cls.__name__)
+    table.add_row("📦 Module", task_cls.__module__)
+    
+    # Get category
+    category = "Other"
+    if any(x in task_name for x in ['slither', 'mythril', 'cvss']):
+        category = "Smart Contract Audit"
+    elif any(x in task_name for x in ['shellcode', 'fuzzer', 'autopwn']):
+        category = "Exploit Development"
+    elif any(x in task_name for x in ['chain', 'tx-replay', 'rwa']):
+        category = "Blockchain Security"
+    elif any(x in task_name for x in ['c2', 'lateral', 'social']):
+        category = "Red Team Operations"
+    elif any(x in task_name for x in ['memory', 'disk', 'forensic']):
+        category = "Digital Forensics"
+    elif any(x in task_name for x in ['llm', 'prompt', 'ai']):
+        category = "AI Security"
+    elif 'web' in task_name or 'static' in task_name.lower():
+        category = "Web Security"
+    
+    table.add_row("📂 Category", category)
+    
+    # Documentation
+    doc = task_cls.__doc__ or "No documentation available"
+    doc_lines = doc.strip().split('\n')
+    main_doc = doc_lines[0] if doc_lines else "No description"
+    table.add_row("📝 Description", main_doc)
     
     console.print(table)
+    
+    # Extended documentation if available
+    if len(doc_lines) > 1:
+        rprint(f"\n[bold]📖 Extended Documentation:[/bold]")
+        for line in doc_lines[1:]:
+            if line.strip():
+                rprint(f"  {line.strip()}")
+    
+    # Parameters information
+    required_params = getattr(task_cls, 'REQUIRED_PARAMS', [])
+    optional_params = getattr(task_cls, 'OPTIONAL_PARAMS', [])
+    
+    if required_params or optional_params:
+        rprint(f"\n[bold]⚙️ Parameters:[/bold]")
+        
+        if required_params:
+            rprint(f"[red]Required:[/red]")
+            for param in required_params:
+                rprint(f"  • {param}")
+        
+        if optional_params:
+            rprint(f"[yellow]Optional:[/yellow]")
+            for param in optional_params:
+                rprint(f"  • {param}")
+    
+    # Usage examples
+    if examples:
+        rprint(f"\n[bold]💡 Usage Examples:[/bold]")
+        
+        # Generate examples based on task type
+        if task_name == "cvss":
+            rprint(f"  [dim]# Basic CVSS scoring[/dim]")
+            rprint(f"  sentinelx run {task_name} -p \"{{vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'}}\"")
+        elif task_name == "slither":
+            rprint(f"  [dim]# Analyze smart contract[/dim]")
+            rprint(f"  sentinelx run {task_name} -p \"{{contract_path: 'contract.sol', format: 'json'}}\"")
+        elif task_name == "web2-static":
+            rprint(f"  [dim]# Static code analysis[/dim]")
+            rprint(f"  sentinelx run {task_name} -p \"{{target: 'app.php', language: 'php'}}\"")
+        elif task_name == "shellcode":
+            rprint(f"  [dim]# Generate shellcode[/dim]")
+            rprint(f"  sentinelx run {task_name} -p \"{{arch: 'amd64', payload: '/bin/sh'}}\"")
+        else:
+            rprint(f"  [dim]# Basic execution[/dim]")
+            rprint(f"  sentinelx run {task_name}")
+            rprint(f"  [dim]# With parameters[/dim]")
+            rprint(f"  sentinelx run {task_name} -p \"{{param1: 'value1'}}\"")
+        
+        rprint(f"  [dim]# With custom config and verbose output[/dim]")
+        rprint(f"  sentinelx run {task_name} -c config.yaml -v")
+        rprint(f"  [dim]# Output as JSON[/dim]")
+        rprint(f"  sentinelx run {task_name} -f json")
+    
+    rprint(f"\n[dim]💡 Use --examples to see usage examples[/dim]")
+    rprint(f"[dim]💡 Use 'sentinelx run {task_name} --help' for run-specific options[/dim]")
 
 # Workflow commands
 workflow_app = typer.Typer(help="Workflow orchestration commands")
@@ -733,116 +894,443 @@ if HAS_REPORTING:
             rprint(f"[red]Unknown action: {action}[/red]")
             raise typer.Exit(1)
 
-# =============================================================================
-# Phase 5: Web API Commands
-# =============================================================================
-
-if HAS_WEB:
-    @web_app.command("start")
-    def start_web_server(
-        host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host to bind to"),
-        port: int = typer.Option(8000, "--port", "-p", help="Port to bind to"),
-        reload: bool = typer.Option(False, "--reload", "-r", help="Enable auto-reload for development"),
-        workers: int = typer.Option(1, "--workers", "-w", help="Number of worker processes")
-    ):
-        """Start the SentinelX web API server."""
-        rprint(f"[bold blue]🚀 Starting SentinelX Web API Server[/bold blue]")
-        rprint(f"[green]📡 Server: http://{host}:{port}[/green]")
-        rprint(f"[green]📚 API Docs: http://{host}:{port}/api/docs[/green]")
-        rprint(f"[green]🔧 ReDoc: http://{host}:{port}/api/redoc[/green]")
+@app.command()
+def search(
+    query: str = typer.Argument(..., help="Search term for tasks and descriptions"),
+    case_sensitive: bool = typer.Option(False, "--case-sensitive", "-s", help="Case sensitive search")
+):
+    """Search for tasks by name or description."""
+    tasks = PluginRegistry.list_tasks()
+    
+    if not tasks:
+        rprint("[yellow]No tasks registered[/yellow]")
+        return
+    
+    search_term = query if case_sensitive else query.lower()
+    matches = []
+    
+    for task_name in tasks:
+        task_cls = PluginRegistry.get_task_class(task_name)
+        if not task_cls:
+            continue
         
-        try:
-            app_instance = create_app()
-            uvicorn.run(
-                app_instance,
-                host=host,
-                port=port,
-                reload=reload,
-                workers=workers if not reload else 1
-            )
-        except Exception as e:
-            rprint(f"[red]❌ Failed to start web server: {e}[/red]")
-            raise typer.Exit(1)
-
-    @web_app.command("info")
-    def web_info():
-        """Show information about the web API."""
-        rprint("[bold blue]🌐 SentinelX Web API Information[/bold blue]")
-        rprint("")
-        rprint("[bold green]Available Endpoints:[/bold green]")
-        rprint("  🔹 GET  /api/v1/tasks              - List all tasks")
-        rprint("  🔹 GET  /api/v1/tasks/{name}/info  - Get task details")
-        rprint("  🔹 POST /api/v1/tasks/{name}/run   - Execute task")
-        rprint("  🔹 GET  /api/v1/workflows          - List workflows")
-        rprint("  🔹 POST /api/v1/workflows/run      - Execute workflow")
-        rprint("  🔹 GET  /api/v1/reports            - List reports")
-        rprint("  🔹 WebSocket /ws/execution         - Real-time updates")
-        rprint("")
-        rprint("[bold green]Features:[/bold green]")
-        rprint("  ✅ RESTful API with OpenAPI documentation")
-        rprint("  ✅ Real-time execution monitoring via WebSockets")
-        rprint("  ✅ Async task execution")
-        rprint("  ✅ CORS enabled for web frontend")
-        rprint("  ✅ Built-in authentication (token-based)")
-        rprint("")
-        rprint("[bold yellow]Getting Started:[/bold yellow]")
-        rprint("  1. Start server: sentinelx web start")
-        rprint("  2. Visit http://localhost:8000/api/docs")
-        rprint("  3. Try the API endpoints")
-
-    @web_app.command("test")
-    def test_web_api(
-        host: str = typer.Option("127.0.0.1", "--host", help="API host"),
-        port: int = typer.Option(8000, "--port", help="API port"),
-        task: Optional[str] = typer.Option(None, "--task", help="Task to test")
-    ):
-        """Test the web API endpoints."""
-        import requests
-        import time
+        # Search in task name
+        task_match = search_term in (task_name if case_sensitive else task_name.lower())
         
-        base_url = f"http://{host}:{port}/api/v1"
+        # Search in description/docstring
+        doc = task_cls.__doc__ or ""
+        doc_match = search_term in (doc if case_sensitive else doc.lower())
         
-        try:
-            # Test health endpoint
-            rprint("[blue]🔍 Testing health endpoint...[/blue]")
-            response = requests.get(f"{base_url}/health", timeout=5)
-            if response.status_code == 200:
-                rprint("[green]✅ Health check passed[/green]")
-            else:
-                rprint(f"[red]❌ Health check failed: {response.status_code}[/red]")
-                return
+        # Search in module name
+        module_match = search_term in (task_cls.__module__ if case_sensitive else task_cls.__module__.lower())
+        
+        if task_match or doc_match or module_match:
+            match_reasons = []
+            if task_match:
+                match_reasons.append("name")
+            if doc_match:
+                match_reasons.append("description")
+            if module_match:
+                match_reasons.append("module")
             
-            # Test tasks endpoint
-            rprint("[blue]🔍 Testing tasks endpoint...[/blue]")
-            response = requests.get(f"{base_url}/tasks", timeout=10)
-            if response.status_code == 200:
-                tasks = response.json()
-                rprint(f"[green]✅ Tasks endpoint works - {tasks['total']} tasks available[/green]")
+            matches.append((task_name, task_cls, match_reasons))
+    
+    if not matches:
+        rprint(f"[yellow]No tasks found matching '{query}'[/yellow]")
+        rprint("[dim]💡 Try a different search term or use 'sentinelx list' to see all tasks[/dim]")
+        return
+    
+    rprint(f"[bold green]🔍 Found {len(matches)} task(s) matching '{query}':[/bold green]")
+    rprint("─" * 60)
+    
+    for i, (task_name, task_cls, reasons) in enumerate(matches, 1):
+        # Highlight the matching parts
+        description = (task_cls.__doc__ or "No description").split('\n')[0]
+        
+        reason_text = ", ".join(reasons)
+        rprint(f"\n[bold cyan]{i}. {task_name}[/bold cyan] [dim](matched in: {reason_text})[/dim]")
+        rprint(f"   [green]{description}[/green]")
+        rprint(f"   [dim]Module: {task_cls.__module__.split('.')[-1]}[/dim]")
+    
+    rprint(f"\n[dim]💡 Use 'sentinelx info <task_name>' for detailed information[/dim]")
+    rprint(f"[dim]💡 Use 'sentinelx run <task_name>' to execute a task[/dim]")
+
+@app.command()
+def validate(
+    task: Optional[str] = typer.Argument(None, help="Specific task to validate (optional)"),
+    config: str = typer.Option("config.yaml", "--config", "-c", help="Configuration file to validate"),
+    check_deps: bool = typer.Option(True, "--check-deps", help="Check external dependencies"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output")
+):
+    """Validate tasks and configuration."""
+    rprint("[bold blue]🔍 SentinelX Validation Report[/bold blue]")
+    rprint("─" * 50)
+    
+    issues = []
+    successes = []
+    
+    # Validate configuration
+    try:
+        ctx = Context.load(config if Path(config).exists() else None)
+        successes.append(f"✅ Configuration loaded successfully")
+        if verbose:
+            rprint(f"[green]✅ Configuration loaded from {config if Path(config).exists() else 'defaults'}[/green]")
+    except Exception as e:
+        issues.append(f"❌ Configuration error: {e}")
+        rprint(f"[red]❌ Configuration error: {e}[/red]")
+    
+    # Get tasks to validate
+    if task:
+        tasks_to_check = [task] if task in PluginRegistry.list_tasks() else []
+        if not tasks_to_check:
+            rprint(f"[red]❌ Task '{task}' not found[/red]")
+            return
+    else:
+        tasks_to_check = PluginRegistry.list_tasks()
+    
+    # Validate each task
+    task_results = {}
+    for task_name in tasks_to_check:
+        try:
+            task_cls = PluginRegistry.get_task_class(task_name)
+            if not task_cls:
+                issues.append(f"❌ Task '{task_name}' class not found")
+                continue
                 
-                if task and task in [t['name'] for t in tasks['tasks']]:
-                    # Test specific task execution
-                    rprint(f"[blue]🔍 Testing task execution: {task}...[/blue]")
-                    exec_response = requests.post(
-                        f"{base_url}/tasks/{task}/run",
-                        json={"parameters": {}},
-                        timeout=30
-                    )
-                    if exec_response.status_code == 200:
-                        rprint(f"[green]✅ Task execution started successfully[/green]")
-                    else:
-                        rprint(f"[yellow]⚠️ Task execution response: {exec_response.status_code}[/yellow]")
-            else:
-                rprint(f"[red]❌ Tasks endpoint failed: {response.status_code}[/red]")
+            # Basic validation
+            has_execute = hasattr(task_cls, 'execute') and callable(getattr(task_cls, 'execute'))
+            has_doc = bool(task_cls.__doc__ and task_cls.__doc__.strip())
             
-        except requests.exceptions.ConnectionError:
-            rprint(f"[red]❌ Could not connect to API server at {base_url}[/red]")
-            rprint("[yellow]💡 Make sure the server is running: sentinelx web start[/yellow]")
+            task_issues = []
+            task_successes = []
+            
+            if has_execute:
+                task_successes.append("Has execute method")
+            else:
+                task_issues.append("Missing execute method")
+            
+            if has_doc:
+                task_successes.append("Has documentation")
+            else:
+                task_issues.append("Missing documentation")
+            
+            # Check for required parameters attribute
+            if hasattr(task_cls, 'REQUIRED_PARAMS'):
+                task_successes.append("Has parameter specification")
+            
+            task_results[task_name] = {
+                'issues': task_issues,
+                'successes': task_successes,
+                'status': 'ok' if not task_issues else 'warning'
+            }
+            
         except Exception as e:
-            rprint(f"[red]❌ API test failed: {e}[/red]")
+            issues.append(f"❌ Task '{task_name}' validation failed: {e}")
+            task_results[task_name] = {
+                'issues': [f"Validation failed: {e}"],
+                'successes': [],
+                'status': 'error'
+            }
+    
+    # Display results
+    if verbose or task:
+        rprint(f"\n[bold]📋 Task Validation Results:[/bold]")
+        for task_name, result in task_results.items():
+            status_color = {"ok": "green", "warning": "yellow", "error": "red"}[result['status']]
+            status_icon = {"ok": "✅", "warning": "⚠️", "error": "❌"}[result['status']]
+            
+            rprint(f"\n{status_icon} [bold]{task_name}[/bold] [{status_color}]{result['status'].upper()}[/{status_color}]")
+            
+            for success in result['successes']:
+                rprint(f"  [green]✅ {success}[/green]")
+            
+            for issue in result['issues']:
+                rprint(f"  [red]❌ {issue}[/red]")
+    
+    # Summary
+    total_tasks = len(task_results)
+    ok_tasks = sum(1 for r in task_results.values() if r['status'] == 'ok')
+    warning_tasks = sum(1 for r in task_results.values() if r['status'] == 'warning')
+    error_tasks = sum(1 for r in task_results.values() if r['status'] == 'error')
+    
+    rprint(f"\n[bold]📊 Summary:[/bold]")
+    rprint(f"  Tasks validated: {total_tasks}")
+    rprint(f"  [green]✅ OK: {ok_tasks}[/green]")
+    if warning_tasks > 0:
+        rprint(f"  [yellow]⚠️ Warnings: {warning_tasks}[/yellow]")
+    if error_tasks > 0:
+        rprint(f"  [red]❌ Errors: {error_tasks}[/red]")
+    
+    if issues:
+        rprint(f"\n[bold red]🚨 Issues Found:{len(issues)}[/bold red]")
+        for issue in issues:
+            rprint(f"  {issue}")
+    
+    if not issues and not any(r['issues'] for r in task_results.values()):
+        rprint(f"\n[bold green]🎉 All validations passed![/bold green]")
+    
+    rprint(f"\n[dim]💡 Use --verbose for detailed task validation results[/dim]")
 
-if __name__ == "__main__":
-    app()
+@app.command()
+def interactive(
+    task: Optional[str] = typer.Argument(None, help="Task to run interactively (optional)")
+):
+    """Interactive task execution with guided parameter input."""
+    tasks = PluginRegistry.list_tasks()
+    
+    if not tasks:
+        rprint("[red]No tasks available[/red]")
+        return
+    
+    # Task selection if not provided
+    if not task:
+        rprint("[bold blue]🎯 SentinelX Interactive Mode[/bold blue]")
+        rprint("─" * 50)
+        rprint("Select a task to run:\n")
+        
+        # Group tasks by category for better UX
+        categories = {}
+        for task_name in sorted(tasks):
+            task_cls = PluginRegistry.get_task_class(task_name)
+            if not task_cls:
+                continue
+                
+            if any(x in task_name for x in ['slither', 'mythril', 'cvss']):
+                cat = "Smart Contract Audit"
+            elif any(x in task_name for x in ['shellcode', 'fuzzer', 'autopwn']):
+                cat = "Exploit Development"
+            elif any(x in task_name for x in ['chain', 'tx-replay', 'rwa']):
+                cat = "Blockchain Security"
+            elif any(x in task_name for x in ['c2', 'lateral', 'social']):
+                cat = "Red Team Operations"
+            elif any(x in task_name for x in ['memory', 'disk', 'forensic']):
+                cat = "Digital Forensics"
+            elif any(x in task_name for x in ['llm', 'prompt', 'ai']):
+                cat = "AI Security"
+            elif 'web' in task_name or 'static' in task_name.lower():
+                cat = "Web Security"
+            else:
+                cat = "Other"
+            
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append((task_name, task_cls))
+        
+        # Display categorized tasks
+        task_index = 1
+        task_map = {}
+        
+        for cat_name, task_list in categories.items():
+            if not task_list:
+                continue
+            rprint(f"[bold blue]{cat_name}:[/bold blue]")
+            for task_name, task_cls in task_list:
+                desc = (task_cls.__doc__ or "No description").split('\n')[0][:50]
+                if len(desc) >= 50:
+                    desc += "..."
+                rprint(f"  {task_index:2d}. [cyan]{task_name}[/cyan] - {desc}")
+                task_map[task_index] = task_name
+                task_index += 1
+            rprint()
+        
+        # Get user selection
+        try:
+            choice = typer.prompt("Enter task number", type=int)
+            if choice not in task_map:
+                rprint(f"[red]Invalid choice: {choice}[/red]")
+                return
+            task = task_map[choice]
+        except (ValueError, typer.Abort):
+            rprint("[yellow]Cancelled[/yellow]")
+            return
+    
+    # Validate selected task
+    task_cls = PluginRegistry.get_task_class(task)
+    if not task_cls:
+        rprint(f"[red]Task '{task}' not found[/red]")
+        return
+    
+    rprint(f"\n[bold green]🎯 Running: {task}[/bold green]")
+    rprint(f"[dim]{task_cls.__doc__ or 'No description'}[/dim]")
+    rprint("─" * 50)
+    
+    # Interactive parameter collection
+    params = {}
+    
+    # Check for predefined parameters
+    required_params = getattr(task_cls, 'REQUIRED_PARAMS', [])
+    optional_params = getattr(task_cls, 'OPTIONAL_PARAMS', [])
+    
+    if required_params:
+        rprint("[bold red]Required Parameters:[/bold red]")
+        for param in required_params:
+            value = typer.prompt(f"  {param}")
+            params[param] = value
+    
+    if optional_params:
+        rprint("\n[bold yellow]Optional Parameters:[/bold yellow]")
+        rprint("[dim](Press Enter to skip)[/dim]")
+        for param in optional_params:
+            value = typer.prompt(f"  {param}", default="", show_default=False)
+            if value.strip():
+                params[param] = value
+    
+    # Ask for additional parameters
+    rprint("\n[bold blue]Additional Parameters:[/bold blue]")
+    rprint("[dim](Enter parameter name and value, or press Enter to continue)[/dim]")
+    
+    while True:
+        param_name = typer.prompt("Parameter name", default="", show_default=False)
+        if not param_name.strip():
+            break
+        param_value = typer.prompt(f"Value for '{param_name}'")
+        params[param_name] = param_value
+    
+    # Configuration options
+    rprint("\n[bold blue]Execution Options:[/bold blue]")
+    verbose = typer.confirm("Enable verbose logging?", default=False)
+    output_format = typer.prompt("Output format", default="yaml", 
+                                type=typer.Choice(["yaml", "json", "table"]))
+    
+    # Execute the task
+    try:
+        rprint(f"\n[bold green]🚀 Executing {task}...[/bold green]")
+        
+        if verbose:
+            logging.getLogger().setLevel(logging.DEBUG)
+        
+        # Load context
+        ctx = Context.load(None)  # Use default config
+        
+        # Create and run task
+        task_instance = PluginRegistry.create(task, ctx=ctx, **params)
+        
+        with console.status(f"[bold green]Running {task}..."):
+            result = asyncio.run(task_instance())
+        
+        rprint("[bold green]✅ Task completed successfully![/bold green]")
+        rprint("─" * 50)
+        
+        # Display results
+        if output_format == "json":
+            rprint(json.dumps(result, indent=2, default=str))
+        elif output_format == "table" and isinstance(result, dict):
+            table = Table(title=f"Results: {task}")
+            table.add_column("Key", style="cyan")
+            table.add_column("Value", style="green")
+            
+            for key, value in result.items():
+                table.add_row(str(key), str(value))
+            console.print(table)
+        else:  # YAML
+            rprint(yaml.dump(result, default_flow_style=False))
+        
+        # Ask if user wants to save results
+        if typer.confirm("\nSave results to file?", default=False):
+            filename = typer.prompt("Filename", default=f"{task}_results.yaml")
+            with open(filename, 'w') as f:
+                if filename.endswith('.json'):
+                    json.dump(result, f, indent=2, default=str)
+                else:
+                    yaml.dump(result, f, default_flow_style=False)
+            rprint(f"[green]Results saved to {filename}[/green]")
+    
+    except Exception as e:
+        rprint(f"[red]❌ Task execution failed: {e}[/red]")
+        if verbose:
+            import traceback
+            traceback.print_exc()
 
-def main():
-    """Entry point for the sentinelx command."""
-    app()
+@app.command()
+def config(
+    action: str = typer.Argument(..., help="Action: init, show, edit, validate"),
+    file: str = typer.Option("config.yaml", "--file", "-f", help="Config file path")
+):
+    """Configuration management utilities."""
+    config_path = Path(file)
+    
+    if action == "init":
+        if config_path.exists():
+            if not typer.confirm(f"Config file {file} exists. Overwrite?"):
+                return
+        
+        rprint("[bold blue]🔧 Creating SentinelX Configuration[/bold blue]")
+        rprint("─" * 50)
+        
+        # Interactive configuration creation
+        config_data = {
+            "version": "1.0",
+            "debug": typer.confirm("Enable debug mode?", default=False),
+            "log_level": typer.prompt("Log level", default="INFO", 
+                                    type=typer.Choice(["DEBUG", "INFO", "WARNING", "ERROR"])),
+            "output_dir": typer.prompt("Output directory", default="./outputs"),
+            "temp_dir": typer.prompt("Temporary directory", default="./temp"),
+        }
+        
+        # Task-specific configurations
+        if typer.confirm("Configure blockchain settings?", default=False):
+            config_data["blockchain"] = {
+                "ethereum_rpc": typer.prompt("Ethereum RPC URL", default="https://mainnet.infura.io/v3/YOUR_KEY"),
+                "polygon_rpc": typer.prompt("Polygon RPC URL", default="https://polygon-rpc.com"),
+                "timeout": typer.prompt("RPC timeout (seconds)", default=30, type=int)
+            }
+        
+        if typer.confirm("Configure OpenAI settings?", default=False):
+            config_data["openai"] = {
+                "api_key": typer.prompt("OpenAI API Key", hide_input=True),
+                "model": typer.prompt("Default model", default="gpt-3.5-turbo"),
+                "max_tokens": typer.prompt("Max tokens", default=1000, type=int)
+            }
+        
+        # Save configuration
+        with open(config_path, 'w') as f:
+            yaml.dump(config_data, f, default_flow_style=False)
+        
+        rprint(f"[green]✅ Configuration saved to {file}[/green]")
+        
+    elif action == "show":
+        if not config_path.exists():
+            rprint(f"[red]Config file {file} not found[/red]")
+            return
+        
+        rprint(f"[bold blue]📋 Configuration: {file}[/bold blue]")
+        rprint("─" * 50)
+        
+        with open(config_path, 'r') as f:
+            config_data = yaml.safe_load(f)
+        
+        # Pretty print configuration
+        def print_config(data, indent=0):
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    rprint(f"{'  ' * indent}[cyan]{key}:[/cyan]")
+                    print_config(value, indent + 1)
+                else:
+                    rprint(f"{'  ' * indent}[cyan]{key}:[/cyan] {value}")
+        
+        print_config(config_data)
+        
+    elif action == "edit":
+        if not config_path.exists():
+            rprint(f"[red]Config file {file} not found. Use 'config init' first.[/red]")
+            return
+        
+        import subprocess
+        import os
+        editor = os.environ.get('EDITOR', 'nano')
+        subprocess.call([editor, str(config_path)])
+        
+    elif action == "validate":
+        if not config_path.exists():
+            rprint(f"[red]Config file {file} not found[/red]")
+            return
+        
+        try:
+            ctx = Context.load(file)
+            rprint("[green]✅ Configuration is valid[/green]")
+        except Exception as e:
+            rprint(f"[red]❌ Configuration error: {e}[/red]")
+    
+    else:
+        rprint(f"[red]Unknown action: {action}[/red]")
+        rprint("Available actions: init, show, edit, validate")
