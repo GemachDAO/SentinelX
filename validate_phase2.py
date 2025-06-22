@@ -18,28 +18,25 @@ except Exception as e:
     print(f"✗ Core import failed: {e}")
     sys.exit(1)
 
-async def test_task(task_name, params=None):
-    """Test a single task execution"""
+async def test_task(task_name, params=None, timeout=30):
+    """Test a single task execution with timeout"""
     try:
-        task_cls = PluginRegistry.get_task_class(task_name)
-        if not task_cls:
-            return {"status": "FAILED", "error": "Task not registered"}
-        
         # Create context
-        ctx = Context({})
+        ctx = Context.load()
         
-        # Create task instance with test parameters
+        # Create task instance with test parameters using registry
         test_params = params or {}
-        task_instance = task_cls(ctx=ctx, **test_params)
+        task_instance = PluginRegistry.create(task_name, ctx=ctx, **test_params)
         
-        # Execute task
-        result = await task_instance.run()
+        # Run the task with a timeout
+        result = await asyncio.wait_for(task_instance.run(), timeout=timeout)
         
         if result and isinstance(result, dict):
             return {"status": "SUCCESS", "result_keys": list(result.keys())}
         else:
             return {"status": "FAILED", "error": "Invalid result format"}
-            
+    except asyncio.TimeoutError:
+        return {"status": "FAILED", "error": f"Timeout after {timeout}s"}
     except Exception as e:
         return {"status": "FAILED", "error": str(e)}
 
@@ -75,7 +72,8 @@ async def main():
     for task_name in sorted(tasks):
         print(f"Testing {task_name}...")
         params = test_params.get(task_name, {})
-        result = await test_task(task_name, params)
+        # Use a 30s timeout per task
+        result = await test_task(task_name, params, timeout=30)
         results[task_name] = result
         
         if result["status"] == "SUCCESS":
