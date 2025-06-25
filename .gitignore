@@ -180,3 +180,30 @@ temp/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# Development files and directories
+dev/logs/
+dev/validation/validate_*.py
+dev/test-files/test_*
+
+# Runtime and temporary files
+*.log
+logs/
+*.tmp
+*.temp
+temp/
+tmp/
+*.pid
+*.sock
+
+# Config files with secrets
+config.yaml
+*.key
+*.pem
+*.crt
+
+# Output directories
+output/
+results/
+reports/
+work/

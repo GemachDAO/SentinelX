@@ -27,7 +27,36 @@
 - 🤖 **AI Security** (LLM assistance, Prompt injection testing)
 - 🌐 **Web Security** (Static analysis, Vulnerability scanning)
 
-## 🚀 Quick Start
+## � Project Structure
+
+```
+sentinelx/
+├── sentinelx/              # Core framework code
+│   ├── core/              # Framework core (tasks, registry, context)
+│   ├── audit/             # Smart contract auditing tasks
+│   ├── exploit/           # Exploit development tools
+│   ├── blockchain/        # Blockchain security tools
+│   ├── redteam/           # Red team operation tools
+│   ├── forensic/          # Digital forensics tools
+│   ├── ai/                # AI-powered security tools
+│   └── cli.py             # Command-line interface
+├── docs/                  # Comprehensive documentation
+│   ├── USER_GUIDE.md      # User guide and tutorials
+│   ├── DEVELOPER_GUIDE.md # Developer and extension guide
+│   ├── API_REFERENCE.md   # Complete API documentation
+│   └── TASK_REFERENCE.md  # Task reference guide
+├── examples/              # Examples and tutorials
+│   ├── workflows/         # Workflow templates
+│   └── custom_tasks/      # Custom task examples
+├── tests/                 # Test suite
+├── scripts/               # Utility scripts
+├── dev/                   # Development files and reports
+├── logs/                  # Application logs
+├── config.yaml.example    # Configuration template
+└── requirements.txt       # Dependencies
+```
+
+## �🚀 Quick Start
 
 ### Installation
 

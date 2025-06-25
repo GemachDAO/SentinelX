@@ -1,3 +1,0 @@
-SELECT * FROM users WHERE id = " + user_input;
-system('rm -rf ' + filename);
-document.write(userdata);
