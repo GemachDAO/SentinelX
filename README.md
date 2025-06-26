@@ -40,7 +40,7 @@
 - 💥 **Advanced Binary Exploitation** (Buffer overflows, ROP chains, Heap exploitation, Shellcode generation)
 - 🎯 **Comprehensive Pwn Toolkit** (Automated exploitation, Multi-technique analysis, CTF-ready)
 - ⛓️ **Blockchain Security** (Chain monitoring, Transaction analysis)
-- 🎭 **Red Team Operations** (C2, Lateral movement, Social engineering)
+- 🎭 **Red Team Operations** (C2, Lateral movement, Comprehensive social engineering campaigns)
 - 🔍 **Digital Forensics** (Memory, Disk, Blockchain IR)
 - 🤖 **AI Security** (LLM assistance, Prompt injection testing)
 - 🌐 **Web Security** (Static analysis, Vulnerability scanning)
@@ -329,6 +329,10 @@ For detailed documentation, see the [docs/](docs/) directory:
 - [**FAQ**](docs/FAQ.md) - Frequently asked questions and troubleshooting
 - [**Task Reference**](docs/TASK_REFERENCE.md) - Complete task documentation and examples
 
+### Specialized Security Toolkits
+- [**PWN Toolkit**](docs/PWN_TOOLKIT.md) - Comprehensive binary exploitation documentation
+- [**Social Engineering Toolkit**](docs/SOCIAL_ENGINEERING_TOOLKIT.md) - Complete social engineering framework documentation
+
 ### Developer Documentation  
 - [**Developer Guide**](docs/DEVELOPER_GUIDE.md) - Development and plugin creation guide
 - [**API Reference**](docs/API_REFERENCE.md) - Complete Python API documentation
@@ -357,7 +361,7 @@ For detailed documentation, see the [docs/](docs/) directory:
 - 🔒 **Smart Contract Audit**: Slither, Mythril, CVSS
 - 💥 **Exploit Development**: Shellcode, Fuzzing, AutoPwn
 - ⛓️ **Blockchain Security**: Chain monitoring, Transaction analysis
-- 🎭 **Red Team Operations**: C2, Lateral movement, Social engineering
+- 🎭 **Red Team Operations**: C2, Lateral movement, Comprehensive social engineering campaigns
 - 🔍 **Digital Forensics**: Memory, Disk, Blockchain IR
 - 🤖 **AI Security**: LLM assistance, Prompt injection testing
 - 🌐 **Web Security**: Static analysis, Vulnerability scanning

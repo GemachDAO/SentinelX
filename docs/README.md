@@ -27,6 +27,21 @@ Welcome to the SentinelX security framework documentation! This directory contai
   - Output formats and interpretation
   - Task-specific configuration
 
+### Specialized Security Toolkits
+- **[PWN Toolkit](PWN_TOOLKIT.md)** - Comprehensive binary exploitation documentation
+  - Buffer overflow exploitation
+  - ROP chain generation
+  - Heap exploitation techniques
+  - Shellcode development
+  - CTF-ready tooling
+
+- **[Social Engineering Toolkit](SOCIAL_ENGINEERING_TOOLKIT.md)** - Complete social engineering framework
+  - Phishing campaign generation
+  - Spear phishing and pretexting
+  - Vishing and smishing campaigns
+  - OSINT intelligence gathering
+  - Security awareness training
+
 ### For Developers
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Complete development guide
   - Architecture overview
