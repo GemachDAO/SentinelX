@@ -46,6 +46,10 @@ class PluginRegistry:
             
             # Exploit tasks
             ('autopwn', 'sentinelx.exploit.exploit_gen', 'AutoPwn'),
+            ('binary-pwn', 'sentinelx.exploit.binary_pwn', 'BinaryExploit'),
+            ('rop-exploit', 'sentinelx.exploit.rop_exploit', 'ROPExploit'),
+            ('heap-exploit', 'sentinelx.exploit.heap_exploit', 'HeapExploit'),
+            ('pwn-toolkit', 'sentinelx.exploit.pwn_toolkit', 'PwnToolkit'),
             ('fuzzer', 'sentinelx.exploit.fuzzing', 'Fuzzer'),
             ('shellcode', 'sentinelx.exploit.shellcode', 'ShellcodeGen'),
             

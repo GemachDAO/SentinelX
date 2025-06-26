@@ -25,7 +25,8 @@
 ## 🎯 Features
 
 ### Core Capabilities
-- **18+ Security Tasks** across all major security domains
+- **21 Security Tasks** across all major security domains (14 original + 7 advanced pwn tasks)
+- **Advanced Pwn Toolkit** with buffer overflows, ROP chains, heap exploitation, and shellcode generation
 - **Workflow Orchestration** with dependency management and error handling
 - **Professional CLI Interface** with rich formatting and interactive modes
 - **Plugin Architecture** for easy extension and customization
@@ -36,7 +37,8 @@
 
 ### Security Domains
 - 🔒 **Smart Contract Auditing** (Slither, Mythril, CVSS)
-- 💥 **Exploit Development** (Shellcode, Fuzzing, AutoPwn)
+- 💥 **Advanced Binary Exploitation** (Buffer overflows, ROP chains, Heap exploitation, Shellcode generation)
+- 🎯 **Comprehensive Pwn Toolkit** (Automated exploitation, Multi-technique analysis, CTF-ready)
 - ⛓️ **Blockchain Security** (Chain monitoring, Transaction analysis)
 - 🎭 **Red Team Operations** (C2, Lateral movement, Social engineering)
 - 🔍 **Digital Forensics** (Memory, Disk, Blockchain IR)
@@ -217,6 +219,18 @@ sentinelx run cvss -p "{vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H'}"
 
 ### Exploit Development
 ```bash
+# Comprehensive pwn analysis
+sentinelx run pwn-toolkit -p "{binary: './challenge'}"
+
+# Buffer overflow exploitation
+sentinelx run binary-pwn -p "{binary: './target', type: 'buffer_overflow'}"
+
+# ROP chain generation
+sentinelx run rop-exploit -p "{binary: './target', type: 'execve', target: '/bin/sh'}"
+
+# Heap exploitation
+sentinelx run heap-exploit -p "{binary: './heap_challenge', technique: 'fastbin_dup'}"
+
 # Generate shellcode
 sentinelx run shellcode -p "{arch: 'amd64', payload: '/bin/sh'}"
 

@@ -17,6 +17,8 @@ The SentinelX Advanced Security Framework has been successfully completed and is
 ### ✅ Phase 2: Security Capabilities
 - [x] **Web2 Security Tasks** - Static analysis, vulnerability scanning, penetration testing
 - [x] **Web3/Blockchain Security** - Smart contract auditing, blockchain monitoring, RWA scanning
+- [x] **Advanced Binary Exploitation** - Buffer overflows, ROP chains, heap exploitation, shellcode generation
+- [x] **Comprehensive Pwn Toolkit** - Automated exploitation with 7+ specialized pwn tasks
 - [x] **AI-Powered Security** - LLM-assisted vulnerability detection and adversarial testing
 - [x] **Forensic Analysis** - Memory analysis, disk forensics, blockchain investigation
 - [x] **Red Team Operations** - C2 frameworks, lateral movement, social engineering
@@ -74,8 +76,9 @@ The SentinelX Advanced Security Framework has been successfully completed and is
 ## 📊 Metrics & Achievements
 
 ### Technical Metrics
-- **18+ Security Tasks** across all major security domains
+- **21 Security Tasks** across all major security domains (14 original + 7 advanced pwn tasks)
 - **6 Core Modules** with modular architecture
+- **Advanced Pwn Toolkit** with comprehensive binary exploitation capabilities
 - **Docker Multi-Stage** optimized for production deployment
 - **YAML Configuration** with schema validation
 - **Rich CLI Interface** with interactive features
