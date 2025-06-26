@@ -4,6 +4,9 @@ Welcome to the SentinelX security framework documentation! This directory contai
 
 ## 📖 Documentation Overview
 
+### 🎯 **Foundation**
+- **[SentinelX Master Prompt](../SENTINELX_MASTER_PROMPT.md)** - Core identity and operational framework
+
 ### For Users
 - **[User Guide](USER_GUIDE.md)** - Complete guide to using SentinelX
   - Installation and setup

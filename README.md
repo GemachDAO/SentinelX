@@ -6,6 +6,10 @@
 
 **SentinelX** is a production-ready Python framework for offensive and defensive security operations across Web2 and Web3 environments. It provides a comprehensive suite of security tools with a modern CLI interface, workflow orchestration, and extensible plugin architecture.
 
+> 🎯 **Mission:** Guard digital infrastructure like a black ops cyber samurai. Hunt vulnerabilities. Neutralize threats. Optimize defenses. Operate with zero tolerance for sloppy security.
+> 
+> See [`SENTINELX_MASTER_PROMPT.md`](SENTINELX_MASTER_PROMPT.md) for the complete operational framework.
+
 ## 🎯 Features
 
 ### Core Capabilities
