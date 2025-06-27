@@ -55,7 +55,7 @@ class PluginRegistry:
             
             # Red team tasks
             ('c2', 'sentinelx.redteam.c2', 'C2Server'),
-            ('lateral-move', 'sentinelx.redteam.lateral_move', 'LateralMove'),
+            ('lateral-move', 'sentinelx.redteam.lateral_move', 'LateralMovement'),
             ('social-eng', 'sentinelx.redteam.social_eng', 'SocialEngineering'),
             
             # Blockchain tasks
