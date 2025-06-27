@@ -332,6 +332,7 @@ For detailed documentation, see the [docs/](docs/) directory:
 ### Specialized Security Toolkits
 - [**PWN Toolkit**](docs/PWN_TOOLKIT.md) - Comprehensive binary exploitation documentation
 - [**Social Engineering Toolkit**](docs/SOCIAL_ENGINEERING_TOOLKIT.md) - Complete social engineering framework documentation
+- [**Lateral Movement Toolkit**](docs/LATERAL_MOVEMENT_TOOLKIT.md) - Advanced network traversal and pivoting documentation
 - [**Lateral Movement Toolkit**](docs/LATERAL_MOVEMENT_TOOLKIT.md) - Advanced lateral movement with pwncat-cs integration
 
 ### Developer Documentation  

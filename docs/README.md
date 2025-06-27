@@ -42,6 +42,13 @@ Welcome to the SentinelX security framework documentation! This directory contai
   - OSINT intelligence gathering
   - Security awareness training
 
+- **[Lateral Movement Toolkit](LATERAL_MOVEMENT_TOOLKIT.md)** - Advanced network traversal and pivoting
+  - pwncat-cs integration for post-exploitation
+  - Multi-protocol lateral movement (SSH, SMB, RDP, WMI)
+  - Network pivoting and tunneling techniques
+  - Covert communication channels
+  - Session management and persistence
+
 - **[Lateral Movement Toolkit](LATERAL_MOVEMENT_TOOLKIT.md)** - Advanced lateral movement capabilities
   - pwncat-cs integration for post-exploitation
   - Multi-protocol pivoting (SSH, SMB, RDP, WMI)
