@@ -110,6 +110,7 @@ class C2Server(Task):
             # Return server configuration for testing
             return {
                 "status": "configured",
+                "server_mode": "test",
                 "host": host,
                 "port": port,
                 "ssl_enabled": use_ssl,

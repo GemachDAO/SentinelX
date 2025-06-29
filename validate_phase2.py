@@ -57,12 +57,12 @@ async def main():
     test_params = {
         "disk-forensics": {"image": "test.img", "type": "timeline"},
         "chain-ir": {"address": "0x123abc", "type": "trace"},
-        "c2": {"mode": "test", "port": 8080},
+        "c2": {"test": True, "port": 8080},
         "tx-replay": {"transaction": "0xabc123"},
         "rwa-scan": {"contract": "0xdef456"},
         "lateral-move": {"target": "192.168.1.100"},
         "social-eng": {"campaign_type": "phishing", "target_count": 10},
-        "memory-forensics": {"dump_file": "memory.dmp", "analysis": "processes"}
+        "memory-forensics": {"dump_path": "demo.mem", "analysis_type": "processes"}
     }
     
     # Test each task

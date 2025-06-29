@@ -17,6 +17,7 @@ async def test_workflow():
     
     # Initialize components
     context = Context.load(None)
+    PluginRegistry.discover()
     registry = PluginRegistry()
     engine = WorkflowEngine(registry)
     

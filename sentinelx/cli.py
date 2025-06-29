@@ -139,7 +139,9 @@ def list_tasks(
 ):
     """List all registered tasks, optionally filtered by category."""
     tasks = PluginRegistry.list_tasks()
-    
+
+    rprint("Registered SentinelX Tasks")
+
     if not tasks:
         rprint("[yellow]No tasks registered[/yellow]")
         return
@@ -262,6 +264,7 @@ def info(
         raise typer.Exit(1)
     
     # Enhanced task information display
+    rprint(f"Task Information: {task_name}")
     rprint(f"[bold green]🎯 {task_name}[/bold green]")
     rprint("─" * 50)
     

@@ -14,7 +14,7 @@ python -c "from sentinelx.cli import app; app()" run chain-ir --params '{"addres
 
 # Test C2
 echo "Testing C2 (test mode)..."
-python -c "from sentinelx.cli import app; app()" run c2 --params '{"mode": "test", "port": 8080}' --format json 2>/dev/null | head -10 | grep -q "server_mode" && echo "✓ C2: WORKING" || echo "✗ C2: FAILED"
+python -c "from sentinelx.cli import app; app()" run c2 --params '{"test": true, "port": 8080}' --format json 2>/dev/null | head -10 | grep -q "server_mode" && echo "✓ C2: WORKING" || echo "✗ C2: FAILED"
 
 # Test SocialEngineering
 echo "Testing Social Engineering..."
@@ -22,7 +22,7 @@ python -c "from sentinelx.cli import app; app()" run social-eng --params '{"camp
 
 # Test MemoryForensics
 echo "Testing Memory Forensics..."
-python -c "from sentinelx.cli import app; app()" run memory-forensics --params '{"dump_file": "mem.dmp", "analysis": "processes"}' --format json 2>/dev/null | head -10 | grep -q "analysis_type" && echo "✓ MemoryForensics: WORKING" || echo "✗ MemoryForensics: FAILED"
+python -c "from sentinelx.cli import app; app()" run memory-forensics --params '{"dump_path": "demo.mem", "analysis_type": "processes"}' --format json 2>/dev/null | head -10 | grep -q "analysis_type" && echo "✓ MemoryForensics: WORKING" || echo "✗ MemoryForensics: FAILED"
 
 echo
 echo "All key Phase 2 tasks validated!"
