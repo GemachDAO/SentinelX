@@ -12,8 +12,8 @@ from dataclasses import dataclass
 import docker
 import yaml
 
-from ..core.task import BaseTask
-from ..core.context import SentinelXContext
+from ..core.task import Task
+from ..core.context import Context
 from ..core.utils import logger
 
 @dataclass
