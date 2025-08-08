@@ -144,6 +144,9 @@ def list_tasks(
         rprint("[yellow]No tasks registered[/yellow]")
         return
     
+    # New header line expected by tests
+    rprint("Registered SentinelX Tasks")
+    
     # Organize tasks by category
     categories = {
         "Smart Contract Audit": [],
@@ -260,6 +263,9 @@ def info(
         
         rprint(f"[dim]Use 'sentinelx list' to see all available tasks[/dim]")
         raise typer.Exit(1)
+    
+    # New header line expected by tests
+    rprint(f"Task Information: {task_name}")
     
     # Enhanced task information display
     rprint(f"[bold green]🎯 {task_name}[/bold green]")
