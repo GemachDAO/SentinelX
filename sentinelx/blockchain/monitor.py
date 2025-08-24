@@ -1,10 +1,17 @@
 from __future__ import annotations
 import asyncio
-import aiohttp
 import json
 import time
 from typing import Dict, Any, List, Optional
 from ..core.task import Task
+
+# Optional dependencies with graceful fallback
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
+    aiohttp = None
 
 
 class ChainMonitor(Task):
@@ -60,6 +67,12 @@ class ChainMonitor(Task):
     
     async def run(self) -> Dict[str, Any]:
         """Execute blockchain monitoring."""
+        if not AIOHTTP_AVAILABLE:
+            return {
+                "status": "error", 
+                "error": "aiohttp is required. Install with: pip install aiohttp"
+            }
+            
         network = self.params.get("network", "ethereum")
         monitor_type = self.params.get("type", "network_status")
         addresses = self.params.get("addresses", [])

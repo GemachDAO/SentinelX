@@ -1,6 +1,4 @@
 from __future__ import annotations
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-import uvicorn
 import ssl
 import secrets
 import base64
@@ -9,11 +7,29 @@ import json
 from typing import Dict, Any
 from ..core.task import Task
 
+# Optional dependencies with graceful fallback
+try:
+    from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+    import uvicorn
+    FASTAPI_AVAILABLE = True
+except ImportError:
+    FASTAPI_AVAILABLE = False
+    FastAPI = None
+    WebSocket = None
+    WebSocketDisconnect = None
+    uvicorn = None
+
 class C2Server(Task):
     """Command & Control Server for red team operations"""
     
     async def run(self):
         """Start C2 server with encrypted communications"""
+        if not FASTAPI_AVAILABLE:
+            return {
+                "status": "error",
+                "error": "FastAPI and uvicorn are required. Install with: pip install fastapi uvicorn"
+            }
+            
         host = self.params.get("host", "0.0.0.0")
         port = self.params.get("port", 4443)
         use_ssl = self.params.get("ssl", False)
