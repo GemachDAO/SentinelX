@@ -1470,3 +1470,6 @@ class LateralMovement(Task):
             "remoting_enabled": True,
             "tested_user": username
         }
+
+# Alias for backward compatibility and entry point
+LateralMove = LateralMovement

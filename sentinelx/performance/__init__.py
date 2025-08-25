@@ -5,7 +5,6 @@ Provides profiling, benchmarking, and performance analysis capabilities.
 from __future__ import annotations
 import time
 import asyncio
-import psutil
 import cProfile
 import pstats
 import io
@@ -17,10 +16,30 @@ from typing import Dict, Any, Optional, List, Callable, Union
 from dataclasses import dataclass, field
 from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-import memory_profiler
-import line_profiler
 
 from ..core.utils import logger
+
+# Optional dependencies with graceful fallback
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    psutil = None
+
+try:
+    import memory_profiler
+    MEMORY_PROFILER_AVAILABLE = True
+except ImportError:
+    MEMORY_PROFILER_AVAILABLE = False
+    memory_profiler = None
+
+try:
+    import line_profiler
+    LINE_PROFILER_AVAILABLE = True
+except ImportError:
+    LINE_PROFILER_AVAILABLE = False
+    line_profiler = None
 
 @dataclass
 class PerformanceMetrics:
@@ -37,7 +56,10 @@ class PerformanceProfiler:
     """Advanced performance profiler for SentinelX tasks."""
     
     def __init__(self):
-        self.process = psutil.Process()
+        if PSUTIL_AVAILABLE:
+            self.process = psutil.Process()
+        else:
+            self.process = None
         self.baseline_metrics = None
         self._profiling_data = {}
     
@@ -45,8 +67,14 @@ class PerformanceProfiler:
     def profile_context(self, name: str = "default"):
         """Context manager for profiling code blocks."""
         start_time = time.perf_counter()
-        start_cpu = self.process.cpu_percent()
-        start_memory = self.process.memory_info()
+        
+        # CPU and memory tracking only if psutil is available
+        if self.process:
+            start_cpu = self.process.cpu_percent()
+            start_memory = self.process.memory_info()
+        else:
+            start_cpu = 0
+            start_memory = type('MockMemInfo', (), {'rss': 0})()
         
         # Enable garbage collection tracking
         gc_before = gc.get_stats()
@@ -55,8 +83,14 @@ class PerformanceProfiler:
             yield
         finally:
             end_time = time.perf_counter()
-            end_cpu = self.process.cpu_percent()
-            end_memory = self.process.memory_info()
+            
+            if self.process:
+                end_cpu = self.process.cpu_percent()
+                end_memory = self.process.memory_info()
+            else:
+                end_cpu = 0
+                end_memory = type('MockMemInfo', (), {'rss': 0})()
+            
             gc_after = gc.get_stats()
             
             metrics = PerformanceMetrics(
@@ -83,7 +117,10 @@ class PerformanceProfiler:
         profiler = cProfile.Profile()
         
         start_time = time.perf_counter()
-        start_memory = self.process.memory_info()
+        if self.process:
+            start_memory = self.process.memory_info()
+        else:
+            start_memory = type('MockMemInfo', (), {'rss': 0})()
         
         profiler.enable()
         try:
@@ -92,7 +129,12 @@ class PerformanceProfiler:
             profiler.disable()
         
         end_time = time.perf_counter()
-        end_memory = self.process.memory_info()
+        if self.process:
+            end_memory = self.process.memory_info()
+            cpu_percent = self.process.cpu_percent()
+        else:
+            end_memory = type('MockMemInfo', (), {'rss': 0})()
+            cpu_percent = 0
         
         # Analyze profiler stats
         stats_stream = io.StringIO()
@@ -102,7 +144,7 @@ class PerformanceProfiler:
         
         metrics = PerformanceMetrics(
             execution_time=end_time - start_time,
-            cpu_usage={"total": self.process.cpu_percent()},
+            cpu_usage={"total": cpu_percent},
             memory_usage={
                 "start": start_memory.rss,
                 "end": end_memory.rss,
@@ -120,16 +162,24 @@ class PerformanceProfiler:
     async def profile_async_function(self, coro: Callable, *args, **kwargs) -> tuple[Any, PerformanceMetrics]:
         """Profile an async function."""
         start_time = time.perf_counter()
-        start_memory = self.process.memory_info()
+        if self.process:
+            start_memory = self.process.memory_info()
+        else:
+            start_memory = type('MockMemInfo', (), {'rss': 0})()
         
         result = await coro(*args, **kwargs)
         
         end_time = time.perf_counter()
-        end_memory = self.process.memory_info()
+        if self.process:
+            end_memory = self.process.memory_info()
+            cpu_percent = self.process.cpu_percent()
+        else:
+            end_memory = type('MockMemInfo', (), {'rss': 0})()
+            cpu_percent = 0
         
         metrics = PerformanceMetrics(
             execution_time=end_time - start_time,
-            cpu_usage={"total": self.process.cpu_percent()},
+            cpu_usage={"total": cpu_percent},
             memory_usage={
                 "start": start_memory.rss,
                 "end": end_memory.rss,
@@ -141,6 +191,16 @@ class PerformanceProfiler:
     
     def get_system_metrics(self) -> Dict[str, Any]:
         """Get current system performance metrics."""
+        if not PSUTIL_AVAILABLE:
+            return {
+                "cpu": {"percent": 0, "count": 1, "freq": None},
+                "memory": {"virtual": {}, "swap": {}},
+                "disk": {},
+                "network": {},
+                "process": {},
+                "note": "psutil not available - limited metrics"
+            }
+        
         return {
             "cpu": {
                 "percent": psutil.cpu_percent(interval=1),
@@ -161,12 +221,12 @@ class PerformanceProfiler:
                 for interface, stats in psutil.net_io_counters(pernic=True).items()
             },
             "process": {
-                "pid": self.process.pid,
-                "cpu_percent": self.process.cpu_percent(),
-                "memory_info": self.process.memory_info()._asdict(),
-                "num_threads": self.process.num_threads(),
-                "open_files": len(self.process.open_files()),
-                "connections": len(self.process.connections())
+                "pid": self.process.pid if self.process else 0,
+                "cpu_percent": self.process.cpu_percent() if self.process else 0,
+                "memory_info": self.process.memory_info()._asdict() if self.process else {},
+                "num_threads": self.process.num_threads() if self.process else 0,
+                "open_files": len(self.process.open_files()) if self.process else 0,
+                "connections": len(self.process.connections()) if self.process else 0
             }
         }
     

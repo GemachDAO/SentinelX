@@ -9,12 +9,12 @@ This module provides comprehensive red team capabilities including:
 For authorized penetration testing and security assessment only.
 """
 
-from .c2 import C2Operations
-from .lateral_move import LateralMovement
+from .c2 import C2Server
+from .lateral_move import LateralMove
 from .social_eng import SocialEngineering
 
 __all__ = [
-    "C2Operations",
-    "LateralMovement", 
+    "C2Server",
+    "LateralMove", 
     "SocialEngineering"
 ]
