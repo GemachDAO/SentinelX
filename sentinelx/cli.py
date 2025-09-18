@@ -1340,3 +1340,12 @@ def config(
     else:
         rprint(f"[red]Unknown action: {action}[/red]")
         rprint("Available actions: init, show, edit, validate")
+
+
+def main():
+    """Main entry point for the CLI."""
+    app()
+
+
+if __name__ == "__main__":
+    main()
