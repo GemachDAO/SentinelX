@@ -170,10 +170,17 @@ class TestPerformanceModuleDependencies:
         """Test that reporting module handles missing dependencies gracefully."""
         try:
             from sentinelx.reporting import ReportGenerator, SecurityReport
+            from datetime import datetime
             
             # These should be importable even without optional dependencies
             generator = ReportGenerator()
-            report = SecurityReport()
+            report = SecurityReport(
+                title="Test Report",
+                workflow_name="test_workflow",
+                execution_time=datetime.utcnow(),
+                duration=1.5,
+                status="completed"
+            )
             
             assert generator is not None
             assert report is not None

@@ -452,9 +452,16 @@ class ReportGenerator:
         """Generate executive summary from report data."""
         total_vulns = 0
         severity_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
+        has_sections_with_severity = False
         
         # Count vulnerabilities across all sections
         for section in report.sections:
+            # Count section-level severity
+            if section.severity in severity_counts:
+                severity_counts[section.severity] += 1
+                has_sections_with_severity = True
+                
+            # Also count vulnerabilities from data if present
             if section.data and isinstance(section.data, dict):
                 if "vulnerabilities" in section.data:
                     vulns = section.data["vulnerabilities"]
@@ -465,20 +472,27 @@ class ReportGenerator:
                                 severity = vuln["severity"].lower()
                                 if severity in severity_counts:
                                     severity_counts[severity] += 1
+                                    has_sections_with_severity = True
+        
+        # Return empty severity_counts if no sections or severities found
+        if not report.sections or not has_sections_with_severity:
+            severity_counts = {}
         
         return {
+            "total_sections": len(report.sections),
             "total_vulnerabilities": total_vulns,
             "severity_breakdown": severity_counts,
+            "severity_counts": severity_counts,  # Alias for backward compatibility
             "status": report.status,
             "execution_time": report.execution_time,
             "duration": report.duration,
             "workflow_name": report.workflow_name
         }
     
-    def create_vulnerability_chart(self, severity_counts: Dict[str, int]) -> List[Dict]:
+    def create_vulnerability_chart(self, severity_counts: Dict[str, int]) -> Dict[str, Any]:
         """Create Plotly chart data for vulnerability severity distribution."""
         if not severity_counts or sum(severity_counts.values()) == 0:
-            return []
+            return {"data": [], "layout": {}}
         
         # Filter out zero counts and prepare colors
         labels = []
@@ -498,18 +512,24 @@ class ReportGenerator:
                 values.append(count)
                 colors.append(color_map.get(severity, '#6c757d'))
         
-        return [{
-            'type': 'pie',
-            'labels': labels,
-            'values': values,
-            'marker': {'colors': colors},
-            'title': {'text': 'Vulnerability Distribution by Severity'}
-        }]
+        return {
+            "data": [{
+                'type': 'bar',
+                'x': labels,
+                'y': values,
+                'marker': {'color': colors}
+            }],
+            "layout": {
+                'title': 'Vulnerability Distribution by Severity',
+                'xaxis': {'title': 'Severity'},
+                'yaxis': {'title': 'Count'}
+            }
+        }
     
-    def create_timeline_chart(self, report: SecurityReport) -> List[Dict]:
+    def create_timeline_chart(self, report: SecurityReport) -> Dict[str, Any]:
         """Create timeline chart for report execution phases."""
         if not report.execution_time:
-            return []
+            return {"data": [], "layout": {}}
         
         # Create simple timeline data
         timeline_data = []
@@ -525,4 +545,18 @@ class ReportGenerator:
                 'name': f'Step {i+1}'
             })
         
-        return timeline_data
+        return {
+            "data": [{
+                'type': 'scatter',
+                'mode': 'markers+lines',
+                'x': list(range(len(report.sections))),
+                'y': [section.title for section in report.sections],
+                'marker': {'size': 10},
+                'name': 'Timeline'
+            }],
+            "layout": {
+                'title': 'Task Execution Timeline',
+                'xaxis': {'title': 'Step'},
+                'yaxis': {'title': 'Task'}
+            }
+        }
