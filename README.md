@@ -248,6 +248,12 @@ sentinelx run web2-static -p "{target: 'app.php', language: 'php'}"
 ```bash
 # Monitor blockchain
 sentinelx run chain-monitor -p "{network: 'ethereum', addresses: ['0x123...']}"
+
+# BNB Chain operations
+sentinelx run bnb-chain -p "{operation: 'status'}"
+sentinelx run bnb-chain -p "{operation: 'balance', address: '0x123...'}"
+sentinelx run bnb-chain -p "{operation: 'token_info', token_address: '0xabc...'}"
+sentinelx run bnb-chain -p "{operation: 'gas_tracker'}"
 ```
 
 ## 🔄 Workflows

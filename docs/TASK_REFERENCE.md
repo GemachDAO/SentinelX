@@ -424,6 +424,126 @@ sentinelx run rwa-scan -p "{
 }"
 ```
 
+---
+
+### bnb-chain - BNB Chain Tools
+**Category**: Blockchain Security  
+**Status**: Production Ready ✅
+
+Comprehensive BNB Chain (Binance Smart Chain) monitoring and analysis toolkit.
+
+#### Parameters
+- **operation** (required): Operation to perform ('status', 'balance', 'token_info', 'validator_info', 'staking_info', 'gas_tracker', 'contract_verify')
+- **network** (optional): Network to use ('mainnet', 'testnet') - default: 'mainnet'
+- **address** (optional): Wallet address (required for 'balance' operation)
+- **token_address** (optional): BEP-20 token address (required for 'token_info' operation)
+- **contract_address** (optional): Contract address (required for 'contract_verify' operation)
+
+#### Operations
+
+##### Chain Status
+Get current BNB Chain network status and health metrics.
+
+```bash
+sentinelx run bnb-chain -p "{
+  operation: 'status',
+  network: 'mainnet'
+}"
+```
+
+##### Balance Check
+Check BNB balance and account information for any address.
+
+```bash
+sentinelx run bnb-chain -p "{
+  operation: 'balance',
+  network: 'mainnet',
+  address: '0x123...'
+}"
+```
+
+##### BEP-20 Token Information
+Get detailed information about BEP-20 tokens (name, symbol, decimals, total supply).
+
+```bash
+sentinelx run bnb-chain -p "{
+  operation: 'token_info',
+  network: 'mainnet',
+  token_address: '0xabc...'
+}"
+```
+
+##### Validator Information
+Get BNB Chain validator and consensus information.
+
+```bash
+sentinelx run bnb-chain -p "{
+  operation: 'validator_info',
+  network: 'mainnet'
+}"
+```
+
+##### Staking Information
+Get BNB staking mechanisms and requirements.
+
+```bash
+sentinelx run bnb-chain -p "{
+  operation: 'staking_info',
+  network: 'mainnet'
+}"
+```
+
+##### Gas Price Tracker
+Track current gas prices and estimate transaction costs.
+
+```bash
+sentinelx run bnb-chain -p "{
+  operation: 'gas_tracker',
+  network: 'mainnet'
+}"
+```
+
+##### Contract Verification
+Verify and analyze smart contracts deployed on BNB Chain.
+
+```bash
+sentinelx run bnb-chain -p "{
+  operation: 'contract_verify',
+  network: 'mainnet',
+  contract_address: '0xdef...'
+}"
+```
+
+#### Output Format
+```yaml
+status: completed
+network: mainnet
+operation: balance
+balance_info:
+  address: "0x123..."
+  balance_bnb: 12.456789
+  balance_formatted: "12.456789 BNB"
+  transaction_count: 42
+  is_contract: false
+  account_type: wallet
+network_config:
+  name: "BNB Smart Chain Mainnet"
+  chain_id: 56
+  native_token: "BNB"
+  explorer: "https://bscscan.com"
+```
+
+#### Features
+- ✅ Real-time chain status monitoring
+- ✅ BNB balance and account queries
+- ✅ BEP-20 token information retrieval
+- ✅ Validator and consensus details
+- ✅ Staking information and requirements
+- ✅ Gas price tracking and estimation
+- ✅ Smart contract verification and analysis
+- ✅ Support for both mainnet and testnet
+- ✅ Multiple RPC endpoint failover
+
 ## Red Team Operations
 
 ### c2 - Command & Control Server

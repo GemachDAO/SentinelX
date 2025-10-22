@@ -62,6 +62,7 @@ class PluginRegistry:
             ('chain-monitor', 'sentinelx.blockchain.monitor', 'ChainMonitor'),
             ('tx-replay', 'sentinelx.blockchain.replay', 'TxReplay'),
             ('rwa-scan', 'sentinelx.blockchain.rwascan', 'RwaScan'),
+            ('bnb-chain', 'sentinelx.blockchain.bnb', 'BNBChain'),
             
             # Forensics tasks
             ('memory-forensics', 'sentinelx.forensic.memory', 'MemoryForensics'),
